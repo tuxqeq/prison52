@@ -21,10 +21,10 @@ public class DoctorTest extends SimpleUnitTest {
         runTest("testDoctorSpecialization", () -> {
             Doctor d = new Doctor("Dr", "House", 15, "9am-5pm", "555-0100", 
                 "house@hospital.com", "LIC-123", "555-0101");
-            d.addSpecialization("Diagnostic");
-            assertEquals(1, d.getSpecializations().size());
+            d.addSpecialisation("Diagnostic");
+            assertEquals(1, d.getSpecialisation().size());
             assertThrows(EmptyStringException.class, () -> {
-                d.addSpecialization(null);
+                d.addSpecialisation(null);
             });
         });
     }

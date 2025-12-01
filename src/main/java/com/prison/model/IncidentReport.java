@@ -14,25 +14,38 @@ public class IncidentReport extends Report {
         LOW, MEDIUM, HIGH, CRITICAL
     }
 
+    public enum Status {
+        OPEN, INREVIEW, RESOLVED
+    }
+
     private static List<IncidentReport> extent = new ArrayList<>();
-    private String status;                    // Status of the incident
+    private String severity;                  // Severity description
+    private Status status;                    // Status of the incident
     private List<String> peopleInvolved;      // [1..*] People involved in incident
     private Guard reportingGuard;             // Guard who reported
     private Director reviewingDirector;       // Director reviewing
     private Punishment punishment;            // Punishment resulting from incident
 
-    public IncidentReport(LocalDate date, String description, String status) {
+    public IncidentReport(LocalDate date, String description, Status status) {
         super(date, description);  // Call Report constructor
         setStatus(status);
+        this.severity = "";  // Initialize to empty string
         this.peopleInvolved = new ArrayList<>();  // Initialize required list
         extent.add(this);
     }
-    public String getStatus() { return status; }
-    public void setStatus(String status) {
-        if (status == null || status.trim().isEmpty()) {
-            throw new EmptyStringException("Status cannot be empty.");
+    public Status getStatus() { return status; }
+    public void setStatus(Status status) {
+        if (status == null) {
+            throw new InvalidReferenceException("Status cannot be null.");
         }
         this.status = status;
+    }
+    public String getSeverity() { return severity; }
+    public void setSeverity(String severity) {
+        if (severity == null) {
+            throw new InvalidReferenceException("Severity cannot be null.");
+        }
+        this.severity = severity;
     }
     public List<String> getPeopleInvolved() {
         return Collections.unmodifiableList(peopleInvolved);
@@ -49,17 +62,6 @@ public class IncidentReport extends Report {
     @Override
     public void manageReport() {
         System.out.println("Managing incident report - Status: " + status);
-    }
-
-    // The 'severity' field has been removed from IncidentReport.
-    // If Severity is still needed as an attribute, it should be added to the Report class
-    // or re-added to IncidentReport with a different purpose.
-    // Keeping the methods for now, assuming 'severity' might be re-introduced or handled differently.
-    public Severity getSeverity() { /* Placeholder, as 'severity' field is removed */ return null; }
-    public void setSeverity(Severity severity) {
-        if (severity == null) {
-            throw new InvalidReferenceException("Severity cannot be null.");
-        }
     }
 
     public String getDescription() { return description; }

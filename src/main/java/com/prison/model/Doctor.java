@@ -10,7 +10,7 @@ public class Doctor extends Staff {
     private static final long serialVersionUID = 1L;
     // Subclasses often have their own extent if we want to query just Doctors.
     private static List<Doctor> extent = new ArrayList<>();
-    private List<String> specializations;
+    private List<String> specialisation;
     private String licenseNumber;
     private String contactInfo;  // Contact information for the doctor
     private List<MedicalExamination> examinations;   // Examinations performed
@@ -22,7 +22,7 @@ public class Doctor extends Staff {
         super(name, surname, experienceYears, shiftHour, phone, email);
         setLicenseNumber(licenseNumber);
         setContactInfo(contactInfo);
-        this.specializations = new ArrayList<>();
+        this.specialisation = new ArrayList<>();
         this.examinations = new ArrayList<>();
         this.medicalRecords = new ArrayList<>();
         this.medicalReports = new ArrayList<>();
@@ -37,14 +37,14 @@ public class Doctor extends Staff {
         this.licenseNumber = licenseNumber;
     }
 
-    public List<String> getSpecializations() {
-        return Collections.unmodifiableList(specializations);
+    public List<String> getSpecialisation() {
+        return Collections.unmodifiableList(specialisation);
     }
-    public void addSpecialization(String specialization) {
+    public void addSpecialisation(String specialization) {
         if (specialization == null || specialization.trim().isEmpty()) {
-            throw new EmptyStringException("Specialization cannot be empty.");
+            throw new EmptyStringException("Specialisation cannot be empty.");
         }
-        specializations.add(specialization);
+        specialisation.add(specialization);
     }
 
     public String getContactInfo() { return contactInfo; }

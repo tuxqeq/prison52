@@ -13,7 +13,7 @@ public class MedicalExaminationTest extends SimpleUnitTest {
                 "test@hospital.com", "MD123", "555-0101");
             
             assertThrows(InvalidDateException.class, () -> {
-                new MedicalExamination(LocalDate.now().plusDays(1), "Checkup", "None", doctor);
+                new MedicalExamination(LocalDate.now().plusDays(1), MedicalExamination.ReasonForVisit.Routine, doctor);
             });
             
             Prisoner.clearExtent();

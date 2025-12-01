@@ -9,7 +9,7 @@ public class PunishmentTest extends SimpleUnitTest {
         runTest("testPunishmentValidation", () -> {
             Prisoner prisoner = new Prisoner("Test", "Prisoner", 30, "Test", 
                 LocalDate.of(2020, 1, 1), 5, "None", "Active");
-            IncidentReport incident = new IncidentReport(LocalDate.now(), "Fight", "Open");
+            IncidentReport incident = new IncidentReport(LocalDate.now(), "Fight", IncidentReport.Status.OPEN);
             
             assertThrows(EmptyStringException.class, () -> {
                 new Punishment("", "Description", LocalDate.now(), 5, "Active");

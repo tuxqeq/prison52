@@ -11,13 +11,13 @@ public class IncidentReportTest extends SimpleUnitTest {
                 LocalDate.of(2020, 1, 1), 5, "None", "Active");
             
             assertThrows(EmptyStringException.class, () -> {
-                new IncidentReport(LocalDate.now(), "", "Pending");
+                new IncidentReport(LocalDate.now(), "", IncidentReport.Status.OPEN);
             });
             
             // Valid incident report
-            IncidentReport report = new IncidentReport(LocalDate.now(), "Fight in cafeteria", "Open");
+            IncidentReport report = new IncidentReport(LocalDate.now(), "Fight in cafeteria", IncidentReport.Status.OPEN);
             report.addPersonInvolved("Prisoner A");
-            assertEquals("Open", report.getStatus());
+            assertEquals(IncidentReport.Status.OPEN, report.getStatus());
             
             Prisoner.clearExtent();
             IncidentReport.clearExtent();

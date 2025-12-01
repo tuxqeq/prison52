@@ -40,31 +40,11 @@ public class SystemTest extends SimpleUnitTest {
         runTest("testVisitPastDate", () -> {
             Prisoner prisoner = new Prisoner("Test", "Prisoner", 30, "Test", 
                 LocalDate.of(2020, 1, 1), 5, "None", "Active");
-            Visitor visitor = new Visitor("Test", "Visitor", "Friend");
+            Visitor visitor = new Visitor("Test", "Visitor", "555-0000", "Friend");
             
             assertThrows(InvalidDateException.class, () -> {
-                new Visit(LocalDate.now().minusDays(1), LocalTime.now(), visitor);
+                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, visitor);
             });
-            
-            Prisoner.clearExtent();
-            Visitor.clearExtent();
-        });
-
-        runTest("testVisitRejectionReason", () -> {
-            Visit.clearExtent();
-            Prisoner prisoner = new Prisoner("Test", "Prisoner", 30, "Test", 
-                LocalDate.of(2020, 1, 1), 5, "None", "Active");
-            Visitor visitor = new Visitor("Test", "Visitor", "Friend");
-            Visit v = new Visit(LocalDate.now().plusDays(1), LocalTime.now(), visitor);
-            v.setApprovalStatus(Visit.ApprovalStatus.REJECTED);
-            
-            // Should throw if reason is null/empty when rejected
-            assertThrows(EmptyStringException.class, () -> {
-                v.setRejectionReason(null);
-            });
-            
-            v.setRejectionReason("Security risk");
-            assertEquals("Security risk", v.getRejectionReason());
             
             Prisoner.clearExtent();
             Visitor.clearExtent();
@@ -89,7 +69,7 @@ public class SystemTest extends SimpleUnitTest {
                 "test@hospital.com", "MD123", "555-0101");
             
             assertThrows(InvalidDateException.class, () -> {
-                new MedicalExamination(LocalDate.now().plusDays(1), "Checkup", "None", doctor);
+                new MedicalExamination(LocalDate.now().plusDays(1), MedicalExamination.ReasonForVisit.Routine, doctor);
             });
             
             Prisoner.clearExtent();
@@ -98,7 +78,7 @@ public class SystemTest extends SimpleUnitTest {
 
         runTest("testMealNegativeCalories", () -> {
             assertThrows(NegativeNumberException.class, () -> {
-                new Meal(Meal.DietPlan.STANDARD, -500);
+                new Meal("Test Meal", Meal.DietPlan.STANDARD, -500.0, Meal.MealType.Breakfast);
             });
         });
     }

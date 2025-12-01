@@ -12,13 +12,13 @@ public class MedicalReport extends Report {
 
     private static List<MedicalReport> extent = new ArrayList<>();
     private String roomNumber;
-    private int duration;           // Duration in minutes
+    private double duration;           // Duration in minutes
     private String severityLevel;
     private Doctor doctor;           // Doctor who created the report
     private Guard guard;             // Guard involved in medical report workflow
 
     public MedicalReport(LocalDate date, String description, String roomNumber, 
-                         int duration, String severityLevel, Doctor doctor) {
+                         double duration, String severityLevel, Doctor doctor) {
         super(date, description);  // Call Report constructor
         setRoomNumber(roomNumber);
         setDuration(duration);
@@ -34,8 +34,8 @@ public class MedicalReport extends Report {
         this.roomNumber = roomNumber;
     }
 
-    public int getDuration() { return duration; }
-    public void setDuration(int duration) {
+    public double getDuration() { return duration; }
+    public void setDuration(double duration) {
         if (duration < 0) {
             throw new NegativeNumberException("Duration cannot be negative.");
         }

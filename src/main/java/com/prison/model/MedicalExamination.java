@@ -10,45 +10,39 @@ import java.util.List;
 public class MedicalExamination implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public enum ReasonForVisit {
+        Routine, Injury, Complaint
+    }
+
     private static List<MedicalExamination> extent = new ArrayList<>();
-    private LocalDate examinationDate;
-    private String diagnosis;
-    private String reasonForVisit;           // Reason for visit
+    private LocalDate dateOfExamination;
+    private ReasonForVisit reasonForVisit;           // Reason for visit
     private List<String> prescription;       // [1..*] Prescription list
     private Doctor doctor;        // Examining doctor (Doctor ↔ MedicalExamination)
 
-    public MedicalExamination(LocalDate examinationDate, String diagnosis, String reasonForVisit, 
+    public MedicalExamination(LocalDate dateOfExamination, ReasonForVisit reasonForVisit, 
                               Doctor doctor) {
-        setExaminationDate(examinationDate);
-        setDiagnosis(diagnosis);
+        setDateOfExamination(dateOfExamination);
         setReasonForVisit(reasonForVisit);
         this.prescription = new ArrayList<>(); // Initialize the prescription list
         setDoctor(doctor);
         extent.add(this);
     }
-    public LocalDate getExaminationDate() { return examinationDate; }
-    public void setExaminationDate(LocalDate examinationDate) {
-        if (examinationDate == null) {
+    public LocalDate getDateOfExamination() { return dateOfExamination; }
+    public void setDateOfExamination(LocalDate dateOfExamination) {
+        if (dateOfExamination == null) {
             throw new InvalidReferenceException("Examination date cannot be null.");
         }
-        if (examinationDate.isAfter(LocalDate.now())) {
+        if (dateOfExamination.isAfter(LocalDate.now())) {
             throw new InvalidDateException("Examination date cannot be in the future.");
         }
-        this.examinationDate = examinationDate;
+        this.dateOfExamination = dateOfExamination;
     }
 
-    public String getDiagnosis() { return diagnosis; }
-    public void setDiagnosis(String diagnosis) {
-        if (diagnosis == null || diagnosis.trim().isEmpty()) {
-            throw new EmptyStringException("Diagnosis cannot be empty.");
-        }
-        this.diagnosis = diagnosis;
-    }
-
-    public String getReasonForVisit() { return reasonForVisit; }
-    public void setReasonForVisit(String reasonForVisit) {
-        if (reasonForVisit == null || reasonForVisit.trim().isEmpty()) {
-            throw new EmptyStringException("Reason for visit cannot be empty.");
+    public ReasonForVisit getReasonForVisit() { return reasonForVisit; }
+    public void setReasonForVisit(ReasonForVisit reasonForVisit) {
+        if (reasonForVisit == null) {
+            throw new InvalidReferenceException("Reason for visit cannot be null.");
         }
         this.reasonForVisit = reasonForVisit;
     }
@@ -65,11 +59,7 @@ public class MedicalExamination implements Serializable {
         prescription.remove(item);
     }
     public void conductExamination() {
-        System.out.println("Conducting examination");
-    }
-
-    public void recordFindings(String findings) {
-        setDiagnosis(findings);
+        System.out.println("Conducting examination for: " + reasonForVisit);
     }
     public void set(Doctor doctor) {
         if (doctor == null) {

@@ -3,7 +3,6 @@ package com.prison.model;
 import com.prison.exception.*;
 import java.io.*;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,18 +14,23 @@ public class Visit implements Serializable {
         PENDING, APPROVED, REJECTED, COMPLETED
     }
 
+    public enum VisitType {
+        LAWYER, FAMILY, GENERAL
+    }
+
     private static List<Visit> extent = new ArrayList<>();
 
     private LocalDate date;
-    private LocalTime time;
+    private int duration;          // Duration in minutes
+    private VisitType type;
     private ApprovalStatus approvalStatus;
-    private String rejectionReason;
     private Visitor visitor;       // Visitor (per authoritative table)
     private Director director;     // Director who approves/rejects visit
 
-    public Visit(LocalDate date, LocalTime time, Visitor visitor) {
+    public Visit(LocalDate date, int duration, VisitType type, Visitor visitor) {
         setDate(date);
-        setTime(time);
+        setDuration(duration);
+        setType(type);
         this.approvalStatus = ApprovalStatus.PENDING;
         setVisitor(visitor);
         extent.add(this);
@@ -43,12 +47,20 @@ public class Visit implements Serializable {
         this.date = date;
     }
 
-    public LocalTime getTime() { return time; }
-    public void setTime(LocalTime time) {
-        if (time == null) {
-            throw new InvalidReferenceException("Time cannot be null.");
+    public int getDuration() { return duration; }
+    public void setDuration(int duration) {
+        if (duration <= 0) {
+            throw new NegativeNumberException("Duration must be positive.");
         }
-        this.time = time;
+        this.duration = duration;
+    }
+
+    public VisitType getType() { return type; }
+    public void setType(VisitType type) {
+        if (type == null) {
+            throw new InvalidReferenceException("Visit type cannot be null.");
+        }
+        this.type = type;
     }
 
     public ApprovalStatus getApprovalStatus() { return approvalStatus; }
@@ -57,15 +69,6 @@ public class Visit implements Serializable {
             throw new InvalidReferenceException("Approval status cannot be null.");
         }
         this.approvalStatus = approvalStatus;
-    }
-
-    public String getRejectionReason() { return rejectionReason; }
-    public void setRejectionReason(String rejectionReason) {
-        // Only allow setting rejection reason if status is REJECTED
-        if (this.approvalStatus == ApprovalStatus.REJECTED && (rejectionReason == null || rejectionReason.trim().isEmpty())) {
-             throw new EmptyStringException("Rejection reason is required when status is REJECTED.");
-        }
-        this.rejectionReason = rejectionReason;
     }
     
     public void setVisitor(Visitor visitor) {

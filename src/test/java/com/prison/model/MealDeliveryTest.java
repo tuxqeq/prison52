@@ -9,7 +9,8 @@ public class MealDeliveryTest extends SimpleUnitTest {
         runTest("testMealDeliveryValidation", () -> {
             Prisoner prisoner = new Prisoner("Test", "Prisoner", 30, "Test", 
                 LocalDate.of(2020, 1, 1), 5, "None", "Active");
-            Meal meal = new Meal(Meal.DietPlan.STANDARD, 600);
+            Meal meal = new Meal("Standard Meal", Meal.DietPlan.STANDARD, 600.0, Meal.MealType.Lunch);
+            meal.addAllergen("None");
             
             assertThrows(InvalidReferenceException.class, () -> {
                 new MealDelivery(null, prisoner, meal);

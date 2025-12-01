@@ -12,11 +12,11 @@ public class ChargesTest extends SimpleUnitTest {
             CourtCase courtCase = new CourtCase(LocalDate.now().plusMonths(1), CourtCase.CaseStatus.PENDING, "Judge Smith");
             
             assertThrows(EmptyStringException.class, () -> {
-                new Charges("", "Section 1", "High", LocalDate.now(), prisoner, courtCase);
+                new Charges("", "Section 1", Charges.SeverityLevel.Severe, LocalDate.now(), prisoner, courtCase);
             });
-            assertThrows(EmptyStringException.class, () -> {
-                new Charges("Theft", "", "High", LocalDate.now(), prisoner, courtCase);
-            });
+            // lawSection is now optional [0..1], so null/empty is allowed
+            Charges validCharge = new Charges("Theft", null, Charges.SeverityLevel.Minor, LocalDate.now(), prisoner, courtCase);
+            assertEquals(Charges.SeverityLevel.Minor, validCharge.getSeverityLevel());
             
             Prisoner.clearExtent();
             CourtCase.clearExtent();

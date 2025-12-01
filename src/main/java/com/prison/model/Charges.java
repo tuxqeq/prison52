@@ -10,23 +10,27 @@ import java.util.List;
 public class Charges implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public enum SeverityLevel {
+        Minor, Moderate, Severe
+    }
+
     private static List<Charges> extent = new ArrayList<>();
 
     private String description;
     private String lawSection;
-    private String severityLevel;      // Severity level
+    private SeverityLevel severityLevel;      // Severity level
     private LocalDate dateFiled;       // Date filed
     private Prisoner prisoner;     // Defendant
     private CourtCase courtCase;   // Court case
 
-    public Charges(String description, String lawSection, String severityLevel, LocalDate dateFiled,
+    public Charges(String description, String lawSection, SeverityLevel severityLevel, LocalDate dateFiled,
                    Prisoner prisoner, CourtCase courtCase) {
         setDescription(description);
         setLawSection(lawSection);
         setSeverityLevel(severityLevel);
         setDateFiled(dateFiled);
-        setPrisoner(prisoner);
-        setCourtCase(courtCase);
+        setCourtCase(courtCase);  // Set court case first
+        setPrisoner(prisoner);     // Then set prisoner (which needs courtCase)
         extent.add(this);
     }
     public String getDescription() { return description; }
@@ -39,16 +43,14 @@ public class Charges implements Serializable {
 
     public String getLawSection() { return lawSection; }
     public void setLawSection(String lawSection) {
-        if (lawSection == null || lawSection.trim().isEmpty()) {
-            throw new EmptyStringException("Law section cannot be empty.");
-        }
+        // lawSection is optional [0..1], so null or empty is allowed
         this.lawSection = lawSection;
     }
 
-    public String getSeverityLevel() { return severityLevel; }
-    public void setSeverityLevel(String severityLevel) {
-        if (severityLevel == null || severityLevel.trim().isEmpty()) {
-            throw new EmptyStringException("Severity level cannot be empty.");
+    public SeverityLevel getSeverityLevel() { return severityLevel; }
+    public void setSeverityLevel(SeverityLevel severityLevel) {
+        if (severityLevel == null) {
+            throw new InvalidReferenceException("Severity level cannot be null.");
         }
         this.severityLevel = severityLevel;
     }
@@ -62,12 +64,10 @@ public class Charges implements Serializable {
     }
     /**
      * Determines if charge is a felony based on severity level
-     * Formula: true if severityLevel contains "HIGH" or "FELONY"
+     * Formula: true if severityLevel is Severe
      */
     public boolean isFelony() {
-        if (severityLevel == null) return false;
-        String level = severityLevel.toUpperCase();
-        return level.contains("HIGH") || level.contains("FELONY") || level.contains("SEVERE");
+        return severityLevel == SeverityLevel.Severe;
     }
     
     public void setPrisoner(Prisoner prisoner) {

@@ -12,8 +12,6 @@ public class MedicalRecord implements Serializable {
 
     private static List<MedicalRecord> extent = new ArrayList<>();
 
-    private List<String> allergies;
-    private String bloodType;
     private LocalDate dateOfCreation;
     private List<String> history;              // [1..*] Medical history
     private String descriptionOfDiagnosis;
@@ -21,23 +19,13 @@ public class MedicalRecord implements Serializable {
     private List<MedicalExamination> examinations;   // Examination history
     private Doctor assignedDoctor;                   // Primary doctor for this record
 
-    public MedicalRecord(String bloodType, LocalDate dateOfCreation, String descriptionOfDiagnosis) {
-        setBloodType(bloodType);
+    public MedicalRecord(LocalDate dateOfCreation, String descriptionOfDiagnosis) {
         setDateOfCreation(dateOfCreation);
         setDescriptionOfDiagnosis(descriptionOfDiagnosis);
         this.history = new ArrayList<>();  // Initialize required list
-        this.allergies = new ArrayList<>();
         this.examinations = new ArrayList<>();
         extent.add(this);
     }
-    public String getBloodType() { return bloodType; }
-    public void setBloodType(String bloodType) {
-        if (bloodType == null || bloodType.trim().isEmpty()) {
-            throw new EmptyStringException("Blood type cannot be empty.");
-        }
-        this.bloodType = bloodType;
-    }
-
     public LocalDate getDateOfCreation() { return dateOfCreation; }
     public void setDateOfCreation(LocalDate dateOfCreation) {
         if (dateOfCreation == null) {
@@ -72,19 +60,9 @@ public class MedicalRecord implements Serializable {
 
     public void viewMedicalRecord() {
         System.out.println("Medical Record for: " + (prisoner != null ? prisoner.getName() : "Unknown"));
-        System.out.println("Blood Type: " + bloodType);
         System.out.println("Diagnosis: " + descriptionOfDiagnosis);
     }
 
-    public List<String> getAllergies() {
-        return Collections.unmodifiableList(allergies);
-    }
-    public void addAllergy(String allergy) {
-        if (allergy == null || allergy.trim().isEmpty()) {
-            throw new EmptyStringException("Allergy cannot be empty.");
-        }
-        allergies.add(allergy);
-    }
     /**
      * Sets the prisoner this record belongs to (one-time only)
      */

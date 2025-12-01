@@ -9,17 +9,21 @@ import java.util.List;
 public class Visitor implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private static final int MaxAmountOfVisitPerMonth = 2;
+
     private static List<Visitor> extent = new ArrayList<>();
 
     private String name;
     private String surname;
-    private String relationship;
+    private String contactInfo;
+    private String relationshipToPrisoner;
     private List<Visit> visits;    // Visits made by this visitor
 
-    public Visitor(String name, String surname, String relationship) {
+    public Visitor(String name, String surname, String contactInfo, String relationshipToPrisoner) {
         setName(name);
         setSurname(surname);
-        setRelationship(relationship);
+        setContactInfo(contactInfo);
+        setRelationshipToPrisoner(relationshipToPrisoner);
         this.visits = new ArrayList<>();
         extent.add(this);
     }
@@ -40,12 +44,24 @@ public class Visitor implements Serializable {
         this.surname = surname;
     }
 
-    public String getRelationship() { return relationship; }
-    public void setRelationship(String relationship) {
-        if (relationship == null || relationship.trim().isEmpty()) {
-            throw new EmptyStringException("Relationship cannot be empty.");
+    public String getContactInfo() { return contactInfo; }
+    public void setContactInfo(String contactInfo) {
+        if (contactInfo == null || contactInfo.trim().isEmpty()) {
+            throw new EmptyStringException("Contact info cannot be empty.");
         }
-        this.relationship = relationship;
+        this.contactInfo = contactInfo;
+    }
+
+    public String getRelationshipToPrisoner() { return relationshipToPrisoner; }
+    public void setRelationshipToPrisoner(String relationshipToPrisoner) {
+        if (relationshipToPrisoner == null || relationshipToPrisoner.trim().isEmpty()) {
+            throw new EmptyStringException("Relationship to prisoner cannot be empty.");
+        }
+        this.relationshipToPrisoner = relationshipToPrisoner;
+    }
+
+    public static int getMaxAmountOfVisitPerMonth() {
+        return MaxAmountOfVisitPerMonth;
     }
     /**
      * Adds a visit to this visitor's history

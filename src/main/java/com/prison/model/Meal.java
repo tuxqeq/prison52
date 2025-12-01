@@ -13,18 +13,36 @@ public class Meal implements Serializable {
         STANDARD, VEGETARIAN, VEGAN, HALAL, KOSHER, DIABETIC
     }
 
+    public enum MealType {
+        Breakfast, Lunch, Dinner
+    }
+
     private static List<Meal> extent = new ArrayList<>();
 
+    private String description;
     private DietPlan dietPlan;
-    private int calories;
+    private Double calories;                 // Changed to wrapper Double
+    private MealType mealType;
+    private List<String> allergens;          // [1..*] At least one allergen required
     private List<MealDelivery> deliveries;   // Delivery history
     private Guard supervisingGuard;          // Guard supervising this meal
 
-    public Meal(DietPlan dietPlan, int calories) {
+    public Meal(String description, DietPlan dietPlan, Double calories, MealType mealType) {
+        setDescription(description);
         setDietPlan(dietPlan);
         setCalories(calories);
+        setMealType(mealType);
+        this.allergens = new ArrayList<>();
         this.deliveries = new ArrayList<>();
         extent.add(this);
+    }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) {
+        if (description == null || description.trim().isEmpty()) {
+            throw new EmptyStringException("Description cannot be empty.");
+        }
+        this.description = description;
     }
 
     public DietPlan getDietPlan() { return dietPlan; }
@@ -35,12 +53,43 @@ public class Meal implements Serializable {
         this.dietPlan = dietPlan;
     }
 
-    public int getCalories() { return calories; }
-    public void setCalories(int calories) {
+    public Double getCalories() { return calories; }
+    public void setCalories(Double calories) {
+        if (calories == null) {
+            throw new InvalidReferenceException("Calories cannot be null.");
+        }
         if (calories < 0) {
             throw new NegativeNumberException("Calories cannot be negative.");
         }
         this.calories = calories;
+    }
+
+    public MealType getMealType() { return mealType; }
+    public void setMealType(MealType mealType) {
+        if (mealType == null) {
+            throw new InvalidReferenceException("Meal type cannot be null.");
+        }
+        this.mealType = mealType;
+    }
+
+    public List<String> getAllergens() {
+        return Collections.unmodifiableList(allergens);
+    }
+
+    public void addAllergen(String allergen) {
+        if (allergen == null || allergen.trim().isEmpty()) {
+            throw new EmptyStringException("Allergen cannot be empty.");
+        }
+        if (!allergens.contains(allergen)) {
+            allergens.add(allergen);
+        }
+    }
+
+    public void removeAllergen(String allergen) {
+        if (allergens.size() <= 1) {
+            throw new ValidationException("Cannot remove allergen - at least one allergen is required [1..*].");
+        }
+        allergens.remove(allergen);
     }
     /**
      * Adds a delivery instance

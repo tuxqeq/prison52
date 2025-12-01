@@ -28,8 +28,8 @@ public class Main {
             System.out.println("\nCreating Staff...");
             Doctor d1 = new Doctor("Gregory", "House", 15, "9am-5pm", 
                 "555-0100", "house@hospital.com", "MED-12345", "555-0101");
-            d1.addSpecialization("Diagnostician");
-            d1.addSpecialization("Nephrology");
+            d1.addSpecialisation("Diagnostician");
+            d1.addSpecialisation("Nephrology");
             
             System.out.println("Doctor: " + d1.getName() + " " + d1.getSurname() + ", Lic: " + d1.getLicenseNumber());
             System.out.println("Total Doctors in Extent: " + Doctor.getDoctorExtent().size());
@@ -56,14 +56,13 @@ public class Main {
 
             // 7. Create Visit
             System.out.println("\nCreating Visits...");
-            Visitor visitor = new Visitor("Mary", "Doe", "Sister");
-            new Visit(LocalDate.now().plusDays(1), java.time.LocalTime.of(14, 0), visitor);
+            Visitor visitor = new Visitor("Mary", "Doe", "555-1234", "Sister");
+            new Visit(LocalDate.now().plusDays(1), 60, Visit.VisitType.FAMILY, visitor);
             System.out.println("Total Visits: " + Visit.getExtent().size());
 
             // 8. Create Medical Record
             System.out.println("\nCreating Medical Records...");
-            MedicalRecord mr = new MedicalRecord("O+", LocalDate.now(), "History of asthma");
-            mr.addAllergy("Peanuts");
+            MedicalRecord mr = new MedicalRecord(LocalDate.now(), "History of asthma");
             mr.addHistory("Initial examination");
             System.out.println("Total Medical Records: " + MedicalRecord.getExtent().size());
 
