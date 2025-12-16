@@ -88,6 +88,18 @@ public class MedicalRecord implements Serializable {
         }
         if (!examinations.contains(exam)) {
             examinations.add(exam);
+            if (exam.getMedicalRecord() != this) {
+                exam.setMedicalRecord(this);
+            }
+        }
+    }
+    
+    public void removeExamination(MedicalExamination exam) {
+        if (exam != null && examinations.contains(exam)) {
+            examinations.remove(exam);
+            if (exam.getMedicalRecord() == this) {
+                exam.setMedicalRecord(null);
+            }
         }
     }
     

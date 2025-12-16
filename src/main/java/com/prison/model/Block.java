@@ -106,8 +106,8 @@ public class Block implements Serializable {
         }
         if (!staff.contains(staffMember)) {
             staff.add(staffMember);
-            if (staffMember.getAssignedBlock() != this) {
-                staffMember.setAssignedBlock(this);
+            if (!staffMember.getBlocks().contains(this)) {
+                staffMember.addBlock(this);
             }
         }
     }
@@ -115,14 +115,18 @@ public class Block implements Serializable {
     public void removeStaff(Staff staffMember) {
         if (staffMember != null && staff.contains(staffMember)) {
             staff.remove(staffMember);
-            if (staffMember.getAssignedBlock() == this) {
-                staffMember.setAssignedBlock(null);
+            if (staffMember.getBlocks().contains(this)) {
+                staffMember.removeBlock(this);
             }
         }
     }
     
     public List<Staff> getStaff() {
         return Collections.unmodifiableList(staff);
+    }
+    
+    public List<Staff> getStaffMembers() {
+        return getStaff();
     }
     public void addSchedule(Schedule schedule) {
         if (schedule == null) {

@@ -19,7 +19,7 @@ public class CourtCase implements Serializable {
     private LocalDate courtDate;
     private CaseStatus status;
     private String judgeName;
-    private List<Charges> charges;   // One-to-many via association class
+    private List<Charges> charges;   // COMPOSITION: Charges[0..*] to CourtCase[1]
 
     public CourtCase(LocalDate courtDate, CaseStatus status, String judgeName) {
         setCourtDate(courtDate);
@@ -53,11 +53,15 @@ public class CourtCase implements Serializable {
         this.judgeName = judgeName;
     }
     /**
-     * Adds a charge to this court case
+     * Adds a charge to this court case (COMPOSITION)
      */
     public void addCharge(Charges charge) {
         if (charge == null) {
             throw new InvalidReferenceException("Charge cannot be null.");
+        }
+        // Composition: charge cannot belong to another case
+        if (charge.getCourtCase() != null && charge.getCourtCase() != this) {
+            throw new ValidationException("Charge already belongs to another court case - composition violation.");
         }
         if (!charges.contains(charge)) {
             charges.add(charge);
@@ -65,6 +69,28 @@ public class CourtCase implements Serializable {
                 charge.setCourtCase(this);
             }
         }
+    }
+    
+    /**
+     * Removes a charge (COMPOSITION - also deletes the charge)
+     */
+    public void removeCharge(Charges charge) {
+        if (charges.contains(charge)) {
+            charges.remove(charge);
+            charge.delete();
+        }
+    }
+    
+    /**
+     * Deletes this court case (COMPOSITION - cascades to all charges)
+     */
+    public void delete() {
+        List<Charges> chargesCopy = new ArrayList<>(charges);
+        for (Charges charge : chargesCopy) {
+            charge.delete();
+        }
+        charges.clear();
+        extent.remove(this);
     }
     
     public List<Charges> getCharges() {

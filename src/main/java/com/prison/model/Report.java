@@ -11,10 +11,11 @@ public abstract class Report implements Serializable {
     private static final long serialVersionUID = 1L;
     protected LocalDate date;
     protected String description;
-    protected Director supervisingDirector;  // Director who supervises this report
+    protected java.util.List<Director> directors;  // Director[0..*] to Report[0..*] - many-to-many
     public Report(LocalDate date, String description) {
         setDate(date);
         setDescription(description);
+        this.directors = new java.util.ArrayList<>();
     }
     public LocalDate getDate() {
         return date;
@@ -42,21 +43,40 @@ public abstract class Report implements Serializable {
     }
     public abstract void manageReport();
     
-    public void setSupervisingDirector(Director director) {
-        if (this.supervisingDirector != director) {
-            if (this.supervisingDirector != null && this.supervisingDirector.getSupervisedReports().contains(this)) {
-                this.supervisingDirector.removeSupervisedReport(this);
-            }
-            
-            this.supervisingDirector = director;
-            
-            if (director != null && !director.getSupervisedReports().contains(this)) {
+    // Many-to-many: Director[0..*] to Report[0..*]
+    public void addDirector(Director director) {
+        if (director == null) {
+            throw new InvalidReferenceException("Director cannot be null.");
+        }
+        if (!directors.contains(director)) {
+            directors.add(director);
+            if (!director.getSupervisedReports().contains(this)) {
                 director.addSupervisedReport(this);
             }
         }
     }
     
+    public void removeDirector(Director director) {
+        if (directors.contains(director)) {
+            directors.remove(director);
+            if (director.getSupervisedReports().contains(this)) {
+                director.removeSupervisedReport(this);
+            }
+        }
+    }
+    
+    public java.util.List<Director> getDirectors() {
+        return java.util.Collections.unmodifiableList(directors);
+    }
+    
+    // Backward compatibility
+    public void setSupervisingDirector(Director director) {
+        if (director != null) {
+            addDirector(director);
+        }
+    }
+    
     public Director getSupervisingDirector() {
-        return supervisingDirector;
+        return directors.isEmpty() ? null : directors.get(0);
     }
 }

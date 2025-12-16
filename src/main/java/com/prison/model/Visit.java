@@ -25,7 +25,7 @@ public class Visit implements Serializable {
     private VisitType type;
     private ApprovalStatus approvalStatus;
     private Visitor visitor;       // Visit[0..*] to Visitor (Qualified Association)
-    private Director director;     // Director[0..*] to Visit[0..*]
+    private List<Director> directors;     // Director[0..*] to Visit[0..*] - many-to-many
     private Prisoner prisoner;     // Prisoner[1] to Visit[0..*] {ordered}
 
     public Visit(LocalDate date, int duration, VisitType type, Visitor visitor, Prisoner prisoner) {
@@ -33,6 +33,7 @@ public class Visit implements Serializable {
         setDuration(duration);
         setType(type);
         this.approvalStatus = ApprovalStatus.PENDING;
+        this.directors = new ArrayList<>();
         setVisitor(visitor);
         setPrisoner(prisoner);
         extent.add(this);
@@ -115,22 +116,41 @@ public class Visit implements Serializable {
         return prisoner;
     }
     
-    public void setDirector(Director director) {
-        if (this.director != director) {
-            if (this.director != null && this.director.getApprovedVisits().contains(this)) {
-                this.director.removeApprovedVisit(this);
-            }
-            
-            this.director = director;
-            
-            if (director != null && !director.getApprovedVisits().contains(this)) {
+    public void addDirector(Director director) {
+        if (director == null) {
+            throw new InvalidReferenceException("Director cannot be null.");
+        }
+        if (!directors.contains(director)) {
+            directors.add(director);
+            if (!director.getApprovedVisits().contains(this)) {
                 director.addApprovedVisit(this);
             }
         }
     }
     
+    public void removeDirector(Director director) {
+        if (director != null && directors.contains(director)) {
+            directors.remove(director);
+            if (director.getApprovedVisits().contains(this)) {
+                director.removeApprovedVisit(this);
+            }
+        }
+    }
+    
+    public List<Director> getDirectors() {
+        return Collections.unmodifiableList(directors);
+    }
+    
+    // Backward compatibility methods
+    public void setDirector(Director director) {
+        directors.clear();
+        if (director != null) {
+            addDirector(director);
+        }
+    }
+    
     public Director getDirector() {
-        return director;
+        return directors.isEmpty() ? null : directors.get(0);
     }
 
     public static List<Visit> getExtent() {

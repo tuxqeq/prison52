@@ -25,7 +25,7 @@ public class Meal implements Serializable {
     private MealType mealType;
     private List<String> allergens;          // [1..*] At least one allergen required
     private List<MealDelivery> deliveries;   // Delivery history
-    private Guard supervisingGuard;          // Guard supervising this meal
+    private List<Guard> supervisingGuards;   // Guard[0..*] to Meal[0..*] - many-to-many
 
     public Meal(String description, DietPlan dietPlan, Double calories, MealType mealType) {
         setDescription(description);
@@ -34,6 +34,7 @@ public class Meal implements Serializable {
         setMealType(mealType);
         this.allergens = new ArrayList<>();
         this.deliveries = new ArrayList<>();
+        this.supervisingGuards = new ArrayList<>();
         extent.add(this);
     }
 
@@ -106,22 +107,42 @@ public class Meal implements Serializable {
         }
     }
     
-    public void setSupervisingGuard(Guard guard) {
-        if (this.supervisingGuard != guard) {
-            if (this.supervisingGuard != null && this.supervisingGuard.getSupervisedMeals().contains(this)) {
-                this.supervisingGuard.removeSupervisedMeal(this);
-            }
-            
-            this.supervisingGuard = guard;
-            
-            if (guard != null && !guard.getSupervisedMeals().contains(this)) {
-                guard.addSupervisedMeal(this);
+    // Many-to-many: Guard[0..*] to Meal[0..*]
+    public void addSupervisingGuard(Guard guard) {
+        if (guard == null) {
+            throw new InvalidReferenceException("Guard cannot be null.");
+        }
+        if (!supervisingGuards.contains(guard)) {
+            supervisingGuards.add(guard);
+            if (!guard.getMeals().contains(this)) {
+                guard.addMeal(this);
             }
         }
     }
     
+    public void removeSupervisingGuard(Guard guard) {
+        if (supervisingGuards.contains(guard)) {
+            supervisingGuards.remove(guard);
+            if (guard.getMeals().contains(this)) {
+                guard.removeMeal(this);
+            }
+        }
+    }
+    
+    public List<Guard> getSupervisingGuards() {
+        return Collections.unmodifiableList(supervisingGuards);
+    }
+    
+    // Backward compatibility
+    public void setSupervisingGuard(Guard guard) {
+        supervisingGuards.clear();
+        if (guard != null) {
+            addSupervisingGuard(guard);
+        }
+    }
+    
     public Guard getSupervisingGuard() {
-        return supervisingGuard;
+        return supervisingGuards.isEmpty() ? null : supervisingGuards.get(0);
     }
     
     public List<MealDelivery> getDeliveries() {

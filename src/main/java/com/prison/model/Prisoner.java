@@ -215,24 +215,35 @@ public class Prisoner implements Serializable {
     // --- Association Management Methods ---
     
     /**
-     * Assigns prisoner to a cell (Basic Association - unidirectional from Prisoner to Cell)
-     * Multiplicity: Prisoner[1..*] to Cell[1]
+     * Assigns prisoner to a cell (Basic Association - Cell[1..*] to Prisoner[1])
+     * Multiplicity: Cell[1..*] to Prisoner[1]
      */
     public void assignToCell(Cell cell) {
         if (cell == null) {
             throw new InvalidReferenceException("Cell cannot be null - prisoner must be assigned to a cell.");
         }
+        if (this.currentCell != null && this.currentCell.getPrisoners().contains(this)) {
+            this.currentCell.removePrisoner(this);
+        }
         this.currentCell = cell;
+        if (!cell.getPrisoners().contains(this)) {
+            cell.addPrisoner(this);
+        }
     }
     
     /**
-     * Sets current cell (wrapper for assignToCell)
+     * Sets current cell (maintains bidirectional connection)
      */
     public void setCurrentCell(Cell cell) {
-        if (cell == null) {
-            throw new InvalidReferenceException("Cell cannot be null - prisoner must be assigned to a cell.");
+        if (this.currentCell != cell) {
+            if (this.currentCell != null && this.currentCell.getPrisoners().contains(this)) {
+                this.currentCell.removePrisoner(this);
+            }
+            this.currentCell = cell;
+            if (cell != null && !cell.getPrisoners().contains(this)) {
+                cell.addPrisoner(this);
+            }
         }
-        this.currentCell = cell;
     }
     
     /**
@@ -256,25 +267,32 @@ public class Prisoner implements Serializable {
     /**
      * Called by Punishment.setPrisoner()
     /**
-     * XOR Constraint: Prisoner can have EITHER punishments OR court cases, not both
+     * Adds a punishment (many-to-many)
      */
     public void addPunishment(Punishment punishment) {
         if (punishment == null) {
             throw new InvalidReferenceException("Punishment cannot be null.");
         }
-        // XOR Constraint: Cannot have both punishments and court cases
-        if (!courtCases.isEmpty()) {
-            throw new ValidationException("XOR Constraint Violation: Prisoner cannot have both punishments and court cases. Clear court cases first.");
-        }
         if (!punishments.contains(punishment)) {
             punishments.add(punishment);
-            if (punishment.getPrisoner() != this) {
-                punishment.setPrisoner(this);
+            if (!punishment.getPrisoners().contains(this)) {
+                punishment.addPrisoner(this);
             }
         }
     }
     
     /**
+     * Removes a punishment
+     */
+    public void removePunishment(Punishment punishment) {
+        if (punishments.contains(punishment)) {
+            punishments.remove(punishment);
+            if (punishment.getPrisoners().contains(this)) {
+                punishment.removePrisoner(this);
+            }
+        }
+    }
+    
     /**
      * Gets all punishments
      */
@@ -282,41 +300,25 @@ public class Prisoner implements Serializable {
         return Collections.unmodifiableList(punishments);
     }
     
-    /**
-    /**
-     * Adds a court case (via Charges association class)
-    /**
-     * Called by charges linkage
-    /**
-     * XOR Constraint: Prisoner can have EITHER court cases OR punishments, not both
-     */
     public void addCourtCase(CourtCase courtCase) {
         if (courtCase == null) {
             throw new InvalidReferenceException("Court case cannot be null.");
-        }
-        // XOR Constraint: Cannot have both court cases and punishments
-        if (!punishments.isEmpty()) {
-            throw new ValidationException("XOR Constraint Violation: Prisoner cannot have both court cases and punishments. Clear punishments first.");
         }
         if (!courtCases.contains(courtCase)) {
             courtCases.add(courtCase);
         }
     }
     
-    /**
-    /**
-     * Gets all court cases
-     */
+    public void removeCourtCase(CourtCase courtCase) {
+        if (courtCase != null) {
+            courtCases.remove(courtCase);
+        }
+    }
+    
     public List<CourtCase> getCourtCases() {
         return Collections.unmodifiableList(courtCases);
     }
     
-    /**
-    /**
-     * Adds a meal delivery
-    /**
-     * Called by MealDelivery.setPrisoner()
-     */
     public void addMealDelivery(MealDelivery delivery) {
         if (delivery == null) {
             throw new InvalidReferenceException("Meal delivery cannot be null.");
@@ -329,10 +331,6 @@ public class Prisoner implements Serializable {
         }
     }
     
-    /**
-    /**
-     * Gets all meal deliveries
-     */
     public List<MealDelivery> getMealDeliveries() {
         return Collections.unmodifiableList(mealDeliveries);
     }

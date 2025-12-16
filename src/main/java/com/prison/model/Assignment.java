@@ -12,10 +12,12 @@ public class Assignment implements Serializable {
     private static List<Assignment> extent = new ArrayList<>();
     private String name;
     private String description;
-    private Director director;  // Director who manages this assignment
+    private List<Director> directors;  // Director[0..*] to Assignment[0..*] - many-to-many
+    
     public Assignment(String name, String description) {
         setName(name);
         setDescription(description);
+        this.directors = new ArrayList<>();
         extent.add(this);
     }
     public String getName() {
@@ -44,22 +46,42 @@ public class Assignment implements Serializable {
         System.out.println("Description: " + description);
     }
     
-    public void setDirector(Director director) {
-        if (this.director != director) {
-            if (this.director != null && this.director.getAssignments().contains(this)) {
-                this.director.removeAssignment(this);
-            }
-            
-            this.director = director;
-            
-            if (director != null && !director.getAssignments().contains(this)) {
+    // Many-to-many: Assignment[0..*] to Director[0..*]
+    public void addDirector(Director director) {
+        if (director == null) {
+            throw new InvalidReferenceException("Director cannot be null.");
+        }
+        if (!directors.contains(director)) {
+            directors.add(director);
+            if (!director.getAssignments().contains(this)) {
                 director.addAssignment(this);
             }
         }
     }
     
+    public void removeDirector(Director director) {
+        if (director != null && directors.contains(director)) {
+            directors.remove(director);
+            if (director.getAssignments().contains(this)) {
+                director.removeAssignment(this);
+            }
+        }
+    }
+    
+    public List<Director> getDirectors() {
+        return Collections.unmodifiableList(directors);
+    }
+    
+    // Backward compatibility
     public Director getDirector() {
-        return director;
+        return directors.isEmpty() ? null : directors.get(0);
+    }
+    
+    public void setDirector(Director director) {
+        directors.clear();
+        if (director != null) {
+            addDirector(director);
+        }
     }
     
     public static List<Assignment> getExtent() {

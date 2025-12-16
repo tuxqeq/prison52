@@ -87,7 +87,11 @@ public class Charges implements Serializable {
     
     public void setCourtCase(CourtCase courtCase) {
         if (courtCase == null) {
-            throw new InvalidReferenceException("Court case cannot be null.");
+            throw new InvalidReferenceException("Court case cannot be null - composition requires parent.");
+        }
+        // Composition: cannot change court case once set
+        if (this.courtCase != null && this.courtCase != courtCase) {
+            throw new ValidationException("Charge already belongs to another court case - composition violation.");
         }
         this.courtCase = courtCase;
         
@@ -98,6 +102,17 @@ public class Charges implements Serializable {
     
     public CourtCase getCourtCase() {
         return courtCase;
+    }
+    
+    /**
+     * Deletes this charge (COMPOSITION)
+     */
+    public void delete() {
+        extent.remove(this);
+        // Clean up prisoner association
+        if (prisoner != null && prisoner.getCourtCases().contains(courtCase)) {
+            prisoner.removeCourtCase(courtCase);
+        }
     }
 
     public static List<Charges> getExtent() {

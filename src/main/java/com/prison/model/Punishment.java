@@ -22,8 +22,8 @@ public class Punishment implements Serializable {
     private int duration;                 // Duration in days
     private String status;                // Status (Active, Completed, etc.)
     private IncidentReport incident;   // Incident that caused this punishment
-    private Prisoner prisoner;         // Prisoner being punished
-    private Director approvingDirector; // Director who approved the punishment
+    private List<Prisoner> prisoners;     // Punishment[0..*] to Prisoner[0..*] - many-to-many
+    private List<Director> directors;     // Director[0..*] to Punishment[0..*] - many-to-many
 
     public Punishment(String type, String description, LocalDate startDate, int duration, String status) {
         setType(type);
@@ -31,6 +31,8 @@ public class Punishment implements Serializable {
         setStartDate(startDate);
         setDuration(duration);
         setStatus(status);
+        this.prisoners = new ArrayList<>();
+        this.directors = new ArrayList<>();
         extent.add(this);
     }
     public String getType() { return type; }
@@ -101,41 +103,56 @@ public class Punishment implements Serializable {
         return incident;
     }
     
-    public void set(Prisoner prisoner) {
+    // Many-to-many: Punishment[0..*] to Prisoner[0..*]
+    public void addPrisoner(Prisoner prisoner) {
         if (prisoner == null) {
             throw new InvalidReferenceException("Prisoner cannot be null.");
         }
-        this.prisoner = prisoner;
-        
-        if (!prisoner.getPunishments().contains(this)) {
-            prisoner.addPunishment(this);
-        }
-    }
-    
-    public Prisoner getPrisoner() {
-        return prisoner;
-    }
-    
-    public void setPrisoner(Prisoner prisoner) {
-        this.prisoner = prisoner;
-    }
-    
-    public void setApprovingDirector(Director director) {
-        if (this.approvingDirector != director) {
-            if (this.approvingDirector != null && this.approvingDirector.getApprovedPunishments().contains(this)) {
-                this.approvingDirector.removeApprovedPunishment(this);
-            }
-            
-            this.approvingDirector = director;
-            
-            if (director != null && !director.getApprovedPunishments().contains(this)) {
-                director.addApprovedPunishment(this);
+        if (!prisoners.contains(prisoner)) {
+            prisoners.add(prisoner);
+            if (!prisoner.getPunishments().contains(this)) {
+                prisoner.addPunishment(this);
             }
         }
     }
     
-    public Director getApprovingDirector() {
-        return approvingDirector;
+    public void removePrisoner(Prisoner prisoner) {
+        if (prisoners.contains(prisoner)) {
+            prisoners.remove(prisoner);
+            if (prisoner.getPunishments().contains(this)) {
+                prisoner.removePunishment(this);
+            }
+        }
+    }
+    
+    public List<Prisoner> getPrisoners() {
+        return Collections.unmodifiableList(prisoners);
+    }
+    
+    // Many-to-many: Director[0..*] to Punishment[0..*]
+    public void addDirector(Director director) {
+        if (director == null) {
+            throw new InvalidReferenceException("Director cannot be null.");
+        }
+        if (!directors.contains(director)) {
+            directors.add(director);
+            if (!director.getPunishments().contains(this)) {
+                director.addPunishment(this);
+            }
+        }
+    }
+    
+    public void removeDirector(Director director) {
+        if (directors.contains(director)) {
+            directors.remove(director);
+            if (director.getPunishments().contains(this)) {
+                director.removePunishment(this);
+            }
+        }
+    }
+    
+    public List<Director> getDirectors() {
+        return Collections.unmodifiableList(directors);
     }
 
     public static List<Punishment> getExtent() {

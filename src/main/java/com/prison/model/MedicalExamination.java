@@ -19,6 +19,7 @@ public class MedicalExamination implements Serializable {
     private ReasonForVisit reasonForVisit;           // Reason for visit
     private List<String> prescription;       // [1..*] Prescription list
     private Doctor doctor;        // Examining doctor (Doctor ↔ MedicalExamination)
+    private MedicalRecord medicalRecord;  // MedicalRecord[1] to MedicalExamination[0..*]
 
     public MedicalExamination(LocalDate dateOfExamination, ReasonForVisit reasonForVisit, 
                               Doctor doctor) {
@@ -91,6 +92,27 @@ public class MedicalExamination implements Serializable {
                 doctor.addExamination(this);
             }
         }
+    }
+    
+    public void setMedicalRecord(MedicalRecord record) {
+        if (record == null) {
+            throw new InvalidReferenceException("Medical record cannot be null.");
+        }
+        if (this.medicalRecord != record) {
+            if (this.medicalRecord != null && this.medicalRecord.getExaminations().contains(this)) {
+                this.medicalRecord.removeExamination(this);
+            }
+            
+            this.medicalRecord = record;
+            
+            if (!record.getExaminations().contains(this)) {
+                record.addExamination(this);
+            }
+        }
+    }
+    
+    public MedicalRecord getMedicalRecord() {
+        return medicalRecord;
     }
 
     public static List<MedicalExamination> getExtent() {

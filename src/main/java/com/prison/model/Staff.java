@@ -18,7 +18,7 @@ public abstract class Staff implements Serializable {
     private String shiftHour;
     private String phone;
     private String email;
-    private Block assignedBlock;    // Block[0..*] to Staff[0..*]
+    private List<Block> assignedBlocks;    // Block[0..*] to Staff[0..*] - many-to-many
     private List<Schedule> schedules;  // Staff[0..*] to Schedule[0..*]
     
     public Staff(String name, String surname, int experienceYears, 
@@ -29,6 +29,7 @@ public abstract class Staff implements Serializable {
         setShiftHour(shiftHour);
         setPhone(phone);
         setEmail(email);
+        this.assignedBlocks = new ArrayList<>();
         this.schedules = new ArrayList<>();
         
         // Add to extent
@@ -99,23 +100,41 @@ public abstract class Staff implements Serializable {
             extent = new ArrayList<>();
         }
     }
+    // Many-to-many: Block[0..*] to Staff[0..*]
+    public void addBlock(Block block) {
+        if (block == null) {
+            throw new InvalidReferenceException("Block cannot be null.");
+        }
+        if (!assignedBlocks.contains(block)) {
+            assignedBlocks.add(block);
+            if (!block.getStaffMembers().contains(this)) {
+                block.addStaff(this);
+            }
+        }
+    }
+    
+    public void removeBlock(Block block) {
+        if (assignedBlocks.contains(block)) {
+            assignedBlocks.remove(block);
+            if (block.getStaffMembers().contains(this)) {
+                block.removeStaff(this);
+            }
+        }
+    }
+    
+    public List<Block> getBlocks() {
+        return Collections.unmodifiableList(assignedBlocks);
+    }
+    
+    // Backward compatibility
     public Block getAssignedBlock() {
-        return assignedBlock;
+        return assignedBlocks.isEmpty() ? null : assignedBlocks.get(0);
     }
     
     public void setAssignedBlock(Block block) {
-        if (this.assignedBlock != block) {
-            // Remove from old block
-            if (this.assignedBlock != null && this.assignedBlock.getStaff().contains(this)) {
-                this.assignedBlock.removeStaff(this);
-            }
-            
-            this.assignedBlock = block;
-            
-            // Add to new block
-            if (block != null && !block.getStaff().contains(this)) {
-                block.addStaff(this);
-            }
+        assignedBlocks.clear();
+        if (block != null) {
+            addBlock(block);
         }
     }
     

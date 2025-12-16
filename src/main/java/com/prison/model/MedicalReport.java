@@ -15,7 +15,7 @@ public class MedicalReport extends Report {
     private double duration;           // Duration in minutes
     private String severityLevel;
     private Doctor doctor;           // Doctor who created the report
-    private Guard guard;             // Guard[0..*] to MedicalReport[0..*]
+    private List<Guard> guards;      // Guard[0..*] to MedicalReport[0..*] - many-to-many
     private MedicalRecord medicalRecord;  // COMPOSITION: MedicalReport[0..*] to MedicalRecord[1..1]
 
     public MedicalReport(LocalDate date, String description, String roomNumber, 
@@ -26,6 +26,7 @@ public class MedicalReport extends Report {
         setSeverityLevel(severityLevel);
         setDoctor(doctor);
         setMedicalRecord(medicalRecord);  // Required for composition
+        this.guards = new ArrayList<>();
         extent.add(this);
     }
     public String getRoomNumber() { return roomNumber; }
@@ -69,35 +70,41 @@ public class MedicalReport extends Report {
         return doctor;
     }
     
-    public void set(Guard guard) {
-        if (this.guard != guard) {
-            if (this.guard != null && this.guard.getMedicalReports().contains(this)) {
-                this.guard.removeMedicalReport(this);
-            }
-            
-            this.guard = guard;
-            
-            if (guard != null && !guard.getMedicalReports().contains(this)) {
+    // Many-to-many: Guard[0..*] to MedicalReport[0..*]
+    public void addGuard(Guard guard) {
+        if (guard == null) {
+            throw new InvalidReferenceException("Guard cannot be null.");
+        }
+        if (!guards.contains(guard)) {
+            guards.add(guard);
+            if (!guard.getMedicalReports().contains(this)) {
                 guard.addMedicalReport(this);
             }
         }
     }
     
+    public void removeGuard(Guard guard) {
+        if (guards.contains(guard)) {
+            guards.remove(guard);
+            if (guard.getMedicalReports().contains(this)) {
+                guard.removeMedicalReport(this);
+            }
+        }
+    }
+    
+    public List<Guard> getGuards() {
+        return Collections.unmodifiableList(guards);
+    }
+    
+    // Backward compatibility
     public Guard getGuard() {
-        return guard;
+        return guards.isEmpty() ? null : guards.get(0);
     }
     
     public void setGuard(Guard guard) {
-        if (this.guard != guard) {
-            if (this.guard != null && this.guard.getMedicalReports().contains(this)) {
-                this.guard.removeMedicalReport(this);
-            }
-            
-            this.guard = guard;
-            
-            if (guard != null && !guard.getMedicalReports().contains(this)) {
-                guard.addMedicalReport(this);
-            }
+        guards.clear();
+        if (guard != null) {
+            addGuard(guard);
         }
     }
     
@@ -141,8 +148,8 @@ public class MedicalReport extends Report {
         extent.remove(this);
         
         // Clean up other associations
-        if (guard != null) {
-            guard.removeMedicalReport(this);
+        for (Guard guard : new ArrayList<>(guards)) {
+            removeGuard(guard);
         }
         if (doctor != null) {
             doctor.removeMedicalReport(this);

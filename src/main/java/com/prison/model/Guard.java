@@ -16,11 +16,11 @@ public class Guard extends Staff {
     private static List<Guard> extent = new ArrayList<>();
     private Rank rank;
     private String weapon;  // Weapon assigned to guard
-    private List<IncidentReport> reportedIncidents;  // Guard[0..*] to IncidentReport[0..*]
-    private List<Guard> subordinates;          // Guard[0..*] to Guard[0..*] (Reflex)
-    private Guard supervisor;                  // Guard[0..*] to Guard[0..*] (Reflex)
-    private List<Meal> supervisedMeals;        // Guard[0..*] to Meal[0..*]
-    private List<MedicalReport> medicalReports; // Guard[0..*] to MedicalReport[0..*]
+    private List<IncidentReport> reportedIncidents;  // Guard[0..*] to IncidentReport[0..*] - many-to-many
+    private List<Guard> subordinates;          // Guard[0..*] to Guard[0..*] (Reflex) - many-to-many
+    private List<Guard> supervisors;           // Guard[0..*] to Guard[0..*] (Reflex) - many-to-many
+    private List<Meal> supervisedMeals;        // Guard[0..*] to Meal[0..*] - many-to-many
+    private List<MedicalReport> medicalReports; // Guard[0..*] to MedicalReport[0..*] - many-to-many
 
     public Guard(String name, String surname, int experienceYears, 
                  String shiftHour, String phone, String email, Rank rank, String weapon) {
@@ -29,6 +29,7 @@ public class Guard extends Staff {
         setWeapon(weapon);
         this.reportedIncidents = new ArrayList<>();
         this.subordinates = new ArrayList<>();
+        this.supervisors = new ArrayList<>();
         this.supervisedMeals = new ArrayList<>();
         this.medicalReports = new ArrayList<>();
         extent.add(this);
@@ -80,41 +81,68 @@ public class Guard extends Staff {
     public void removeIncidentReport(IncidentReport incident) {
         removeReportedIncident(incident);
     }
-    public void setSupervisor(Guard supervisor) {
-        if (this.supervisor != supervisor) {
-            if (this.supervisor != null && this.supervisor.getSubordinates().contains(this)) {
-                this.supervisor.removeSubordinate(this);
-            }
-            
-            this.supervisor = supervisor;
-            
-            if (supervisor != null && !supervisor.getSubordinates().contains(this)) {
+    // Many-to-many: Guard[0..*] to Guard[0..*] (Supervisors)
+    public void addSupervisor(Guard supervisor) {
+        if (supervisor == null) {
+            throw new InvalidReferenceException("Supervisor cannot be null.");
+        }
+        if (supervisor == this) {
+            throw new ValidationException("Guard cannot be their own supervisor.");
+        }
+        if (!supervisors.contains(supervisor)) {
+            supervisors.add(supervisor);
+            if (!supervisor.getSubordinates().contains(this)) {
                 supervisor.addSubordinate(this);
             }
         }
     }
     
-    public Guard getSupervisor() {
-        return supervisor;
+    public void removeSupervisor(Guard supervisor) {
+        if (supervisors.contains(supervisor)) {
+            supervisors.remove(supervisor);
+            if (supervisor.getSubordinates().contains(this)) {
+                supervisor.removeSubordinate(this);
+            }
+        }
     }
     
+    public List<Guard> getSupervisors() {
+        return Collections.unmodifiableList(supervisors);
+    }
+    
+    // Backward compatibility
+    public void setSupervisor(Guard supervisor) {
+        supervisors.clear();
+        if (supervisor != null) {
+            addSupervisor(supervisor);
+        }
+    }
+    
+    public Guard getSupervisor() {
+        return supervisors.isEmpty() ? null : supervisors.get(0);
+    }
+    
+    // Many-to-many: Guard[0..*] to Guard[0..*] (Subordinates)
     public void addSubordinate(Guard subordinate) {
         if (subordinate == null) {
             throw new InvalidReferenceException("Subordinate cannot be null.");
         }
+        if (subordinate == this) {
+            throw new ValidationException("Guard cannot be their own subordinate.");
+        }
         if (!subordinates.contains(subordinate)) {
             subordinates.add(subordinate);
-            if (subordinate.getSupervisor() != this) {
-                subordinate.setSupervisor(this);
+            if (!subordinate.getSupervisors().contains(this)) {
+                subordinate.addSupervisor(this);
             }
         }
     }
     
     public void removeSubordinate(Guard subordinate) {
-        if (subordinate != null && subordinates.contains(subordinate)) {
+        if (subordinates.contains(subordinate)) {
             subordinates.remove(subordinate);
-            if (subordinate.getSupervisor() == this) {
-                subordinate.setSupervisor(null);
+            if (subordinate.getSupervisors().contains(this)) {
+                subordinate.removeSupervisor(this);
             }
         }
     }
@@ -122,29 +150,43 @@ public class Guard extends Staff {
     public List<Guard> getSubordinates() {
         return Collections.unmodifiableList(subordinates);
     }
-    public void addSupervisedMeal(Meal meal) {
+    // Many-to-many: Guard[0..*] to Meal[0..*]
+    public void addMeal(Meal meal) {
         if (meal == null) {
             throw new InvalidReferenceException("Meal cannot be null.");
         }
         if (!supervisedMeals.contains(meal)) {
             supervisedMeals.add(meal);
-            if (meal.getSupervisingGuard() != this) {
-                meal.setSupervisingGuard(this);
+            if (!meal.getSupervisingGuards().contains(this)) {
+                meal.addSupervisingGuard(this);
             }
         }
+    }
+    
+    public void removeMeal(Meal meal) {
+        if (supervisedMeals.contains(meal)) {
+            supervisedMeals.remove(meal);
+            if (meal.getSupervisingGuards().contains(this)) {
+                meal.removeSupervisingGuard(this);
+            }
+        }
+    }
+    
+    public List<Meal> getMeals() {
+        return Collections.unmodifiableList(supervisedMeals);
+    }
+    
+    // Backward compatibility
+    public void addSupervisedMeal(Meal meal) {
+        addMeal(meal);
     }
     
     public void removeSupervisedMeal(Meal meal) {
-        if (meal != null && supervisedMeals.contains(meal)) {
-            supervisedMeals.remove(meal);
-            if (meal.getSupervisingGuard() == this) {
-                meal.setSupervisingGuard(null);
-            }
-        }
+        removeMeal(meal);
     }
     
     public List<Meal> getSupervisedMeals() {
-        return Collections.unmodifiableList(supervisedMeals);
+        return getMeals();
     }
     public void addMedicalReport(MedicalReport report) {
         if (report == null) {

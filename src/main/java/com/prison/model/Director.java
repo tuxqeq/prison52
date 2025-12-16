@@ -47,29 +47,43 @@ public class Director extends Staff {
     public void setAssignedBlock(Block block) {
         this.assignedBlock = block;  
     }
-    public void addApprovedPunishment(Punishment punishment) {
+    // Many-to-many: Director[0..*] to Punishment[0..*]
+    public void addPunishment(Punishment punishment) {
         if (punishment == null) {
             throw new InvalidReferenceException("Punishment cannot be null.");
         }
         if (!approvedPunishments.contains(punishment)) {
             approvedPunishments.add(punishment);
-            if (punishment.getApprovingDirector() != this) {
-                punishment.setApprovingDirector(this);
+            if (!punishment.getDirectors().contains(this)) {
+                punishment.addDirector(this);
             }
         }
+    }
+    
+    public void removePunishment(Punishment punishment) {
+        if (punishment != null && approvedPunishments.contains(punishment)) {
+            approvedPunishments.remove(punishment);
+            if (punishment.getDirectors().contains(this)) {
+                punishment.removeDirector(this);
+            }
+        }
+    }
+    
+    public List<Punishment> getPunishments() {
+        return Collections.unmodifiableList(approvedPunishments);
+    }
+    
+    // Keep old names for backward compatibility
+    public void addApprovedPunishment(Punishment punishment) {
+        addPunishment(punishment);
     }
     
     public void removeApprovedPunishment(Punishment punishment) {
-        if (punishment != null && approvedPunishments.contains(punishment)) {
-            approvedPunishments.remove(punishment);
-            if (punishment.getApprovingDirector() == this) {
-                punishment.setApprovingDirector(null);
-            }
-        }
+        removePunishment(punishment);
     }
     
     public List<Punishment> getApprovedPunishments() {
-        return Collections.unmodifiableList(approvedPunishments);
+        return getPunishments();
     }
     public void addReviewedIncidentReport(IncidentReport report) {
         if (report == null) {

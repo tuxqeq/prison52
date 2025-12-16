@@ -166,7 +166,7 @@ public class Main {
             // Punishment
             Punishment punishment = new Punishment("SOLITARY_CONFINEMENT", 
                 "2 weeks solitary confinement", LocalDate.now(), 14, "Active");
-            punishment.setPrisoner(p1);
+            punishment.addPrisoner(p1);
             System.out.println("✓ Punishment: " + punishment.getDescription() + ", Duration: " + punishment.getDuration() + " days");
             
             // Medical Examination

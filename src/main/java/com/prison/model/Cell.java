@@ -19,12 +19,14 @@ public class Cell implements Serializable {
     private int capasity;          // Capacity (diagram spelling)
     private SecurityLevel securityLevel;
     private Block block;                    // Cell belongs to Block (Aggregation)
+    private List<Prisoner> prisoners;       // Cell[1..*] to Prisoner[1] - basic association
     
     public Cell(int cellNumber, String type, int capasity, SecurityLevel securityLevel) {
         setCellNumber(cellNumber);
         setType(type);
         setCapasity(capasity);
         setSecurityLevel(securityLevel);
+        this.prisoners = new ArrayList<>();
         
         extent.add(this);
     }
@@ -75,6 +77,32 @@ public class Cell implements Serializable {
     
     public Block getBlock() {
         return block;
+    }
+
+    // Cell[1..*] to Prisoner[1] - basic association
+    public void addPrisoner(Prisoner prisoner) {
+        if (prisoner == null) {
+            throw new InvalidReferenceException("Prisoner cannot be null.");
+        }
+        if (!prisoners.contains(prisoner)) {
+            prisoners.add(prisoner);
+            if (prisoner.getCurrentCell() != this) {
+                prisoner.setCurrentCell(this);
+            }
+        }
+    }
+
+    public void removePrisoner(Prisoner prisoner) {
+        if (prisoners.contains(prisoner)) {
+            prisoners.remove(prisoner);
+            if (prisoner.getCurrentCell() == this) {
+                prisoner.setCurrentCell(null);
+            }
+        }
+    }
+
+    public List<Prisoner> getPrisoners() {
+        return Collections.unmodifiableList(prisoners);
     }
 
     public static List<Cell> getExtent() {

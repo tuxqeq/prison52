@@ -22,7 +22,7 @@ public class IncidentReport extends Report {
     private String severity;                  // Severity description
     private Status status;                    // Status of the incident
     private List<String> peopleInvolved;      // [1..*] People involved in incident
-    private Guard reportingGuard;             // Guard[0..*] to IncidentReport[0..*]
+    private List<Guard> reportingGuards;      // Guard[0..*] to IncidentReport[0..*] - many-to-many
     private Director reviewingDirector;       // Director reviewing
     private Punishment punishment;            // Punishment resulting from incident
     private IncidentReport relatedIncident;   // Reflex: IncidentReport[0..1] to IncidentReport[0..1]
@@ -33,6 +33,7 @@ public class IncidentReport extends Report {
         this.severity = "";  // Initialize to empty string
         this.peopleInvolved = new ArrayList<>();  // Initialize required list
         this.relatedIncident = null;  // Initialize reflex association
+        this.reportingGuards = new ArrayList<>();
         extent.add(this);
     }
     public Status getStatus() { return status; }
@@ -73,44 +74,41 @@ public class IncidentReport extends Report {
         }
         this.description = description;
     }
-    public void set(Guard guard) {
+    // Many-to-many: Guard[0..*] to IncidentReport[0..*]
+    public void addReportingGuard(Guard guard) {
         if (guard == null) {
-            throw new InvalidReferenceException("Reporting guard cannot be null.");
+            throw new InvalidReferenceException("Guard cannot be null.");
         }
-        // Remove from old guard if exists
-        if (this.reportingGuard != null && this.reportingGuard != guard) {
-            this.reportingGuard.removeIncidentReport(this);
-        }
-        this.reportingGuard = guard;
-        
-        if (!guard.getReportedIncidents().contains(this)) {
-            guard.addIncidentReport(this);
-        }
-    }
-    
-    public Guard getReportingGuard() {
-        return reportingGuard;
-    }
-    
-    public void setReportingGuard(Guard guard) {
-        if (this.reportingGuard != guard) {
-            if (this.reportingGuard != null && this.reportingGuard.getReportedIncidents().contains(this)) {
-                this.reportingGuard.removeReportedIncident(this);
-            }
-            
-            this.reportingGuard = guard;
-            
-            if (guard != null && !guard.getReportedIncidents().contains(this)) {
+        if (!reportingGuards.contains(guard)) {
+            reportingGuards.add(guard);
+            if (!guard.getReportedIncidents().contains(this)) {
                 guard.addReportedIncident(this);
             }
         }
     }
-
-    public void removeReportingGuard() {
-        if (this.reportingGuard != null) {
-            Guard oldGuard = this.reportingGuard;
-            this.reportingGuard = null;
-            oldGuard.removeReportedIncident(this);
+    
+    public void removeReportingGuard(Guard guard) {
+        if (reportingGuards.contains(guard)) {
+            reportingGuards.remove(guard);
+            if (guard.getReportedIncidents().contains(this)) {
+                guard.removeReportedIncident(this);
+            }
+        }
+    }
+    
+    public List<Guard> getReportingGuards() {
+        return Collections.unmodifiableList(reportingGuards);
+    }
+    
+    // Backward compatibility
+    public Guard getReportingGuard() {
+        return reportingGuards.isEmpty() ? null : reportingGuards.get(0);
+    }
+    
+    public void setReportingGuard(Guard guard) {
+        reportingGuards.clear();
+        if (guard != null) {
+            addReportingGuard(guard);
         }
     }
 
