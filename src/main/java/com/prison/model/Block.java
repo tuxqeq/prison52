@@ -18,17 +18,15 @@ public class Block implements Serializable {
     private String name;
     private int numOfCells;
     private BlockType type;
-    private List<Cell> cells;              // Block owns Cells
-    private List<Guard> assignedGuards;    // Guards supervise Blocks
-    private List<Staff> staff;             // Staff assigned to Block
-    private List<Schedule> schedules;      // Schedules for Block activities
+    private List<Cell> cells;              // Cell[0..*] to Block[1] (Aggregation)
+    private List<Staff> staff;             // Block[0..*] to Staff[0..*]
+    private List<Schedule> schedules;      // Block[1] to Schedule[1]
 
     public Block(String name, int numOfCells, BlockType type) {
         setName(name);
         setNumOfCells(numOfCells);
         setType(type);
         this.cells = new ArrayList<>();
-        this.assignedGuards = new ArrayList<>();
         this.staff = new ArrayList<>();
         this.schedules = new ArrayList<>();
         extent.add(this);
@@ -57,10 +55,6 @@ public class Block implements Serializable {
         }
         this.type = type;
     }
-    public int getAvailableCell() {
-        return (int) cells.stream().filter(Cell::isAvailable).count();
-    }
-
     public String getSecurityLevel() {
         return cells.stream()
             .map(cell -> cell.getSecurityLevel())
@@ -69,7 +63,7 @@ public class Block implements Serializable {
             .orElse("UNKNOWN");
     }
 
-    public int getMaxNumOfPrisonerInCell() {
+    public int getMaxCapacity() {
         return cells.stream()
             .mapToInt(Cell::getCapasity)
             .max()
@@ -93,12 +87,7 @@ public class Block implements Serializable {
     
     public void removeCell(Cell cell) {
         if (cell != null && cells.contains(cell)) {
-            // First, ensure all prisoners are removed from the cell
-            List<Prisoner> prisonersToReassign = new ArrayList<>(cell.getPrisoners());
-            for (Prisoner prisoner : prisonersToReassign) {
-                cell.removePrisoner(prisoner);
-            }
-            
+            // Aggregation: cell can exist without block
             cells.remove(cell);
             if (cell.getBlock() == this) {
                 cell.setBlock(null);
@@ -110,31 +99,7 @@ public class Block implements Serializable {
         return Collections.unmodifiableList(cells);
     }
     
-    public void assignGuard(Guard guard) {
-        if (guard == null) {
-            throw new InvalidReferenceException("Guard cannot be null.");
-        }
-        if (!assignedGuards.contains(guard)) {
-            assignedGuards.add(guard);
-            
-            if (!guard.getAssignedBlocks().contains(this)) {
-                guard.assignToBlock(this);
-            }
-        }
-    }
-    
-    public void removeGuard(Guard guard) {
-        if (guard != null && assignedGuards.contains(guard)) {
-            assignedGuards.remove(guard);
-            if (guard.getAssignedBlocks().contains(this)) {
-                guard.removeFromBlock(this);
-            }
-        }
-    }
-    
-    public List<Guard> getAssignedGuards() {
-        return Collections.unmodifiableList(assignedGuards);
-    }
+
     public void addStaff(Staff staffMember) {
         if (staffMember == null) {
             throw new InvalidReferenceException("Staff member cannot be null.");
@@ -174,9 +139,7 @@ public class Block implements Serializable {
     public void removeSchedule(Schedule schedule) {
         if (schedule != null && schedules.contains(schedule)) {
             schedules.remove(schedule);
-            if (schedule.getBlock() == this) {
-                schedule.setBlock(null);
-            }
+            // Note: Schedule requires a Block, so this should transfer to another block
         }
     }
     

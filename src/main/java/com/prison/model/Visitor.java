@@ -2,9 +2,8 @@ package com.prison.model;
 
 import com.prison.exception.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.LocalDate;
+import java.util.*;
 
 public class Visitor implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -17,14 +16,14 @@ public class Visitor implements Serializable {
     private String surname;
     private String contactInfo;
     private String relationshipToPrisoner;
-    private List<Visit> visits;    // Visits made by this visitor
+    private Map<LocalDate, Visit> visitsByDate;    // Qualified Association: Visit[0..*] to Visitor (qualified by date)
 
     public Visitor(String name, String surname, String contactInfo, String relationshipToPrisoner) {
         setName(name);
         setSurname(surname);
         setContactInfo(contactInfo);
         setRelationshipToPrisoner(relationshipToPrisoner);
-        this.visits = new ArrayList<>();
+        this.visitsByDate = new HashMap<>();
         extent.add(this);
     }
 
@@ -63,23 +62,81 @@ public class Visitor implements Serializable {
     public static int getMaxAmountOfVisitPerMonth() {
         return MaxAmountOfVisitPerMonth;
     }
+    
     /**
-     * Adds a visit to this visitor's history
+     * Adds a visit by date (Qualified Association)
+     * The qualifier is the visit date
      */
-    public void addVisit(Visit visit) {
+    public void addVisitByDate(LocalDate date, Visit visit) {
+        if (date == null) {
+            throw new InvalidReferenceException("Visit date cannot be null.");
+        }
         if (visit == null) {
             throw new InvalidReferenceException("Visit cannot be null.");
         }
-        if (!visits.contains(visit)) {
-            visits.add(visit);
-            if (visit.getVisitor() != this) {
-                visit.setVisitor(this);
-            }
+        
+        // Check if a visit already exists for this date
+        if (visitsByDate.containsKey(date)) {
+            throw new ValidationException("A visit already exists for date: " + date);
+        }
+        
+        visitsByDate.put(date, visit);
+        if (visit.getVisitor() != this) {
+            visit.setVisitor(this);
         }
     }
     
-    public List<Visit> getVisits() {
-        return Collections.unmodifiableList(visits);
+    /**
+     * Removes a visit by date
+     */
+    public void removeVisitByDate(LocalDate date) {
+        if (date == null) {
+            throw new InvalidReferenceException("Visit date cannot be null.");
+        }
+        
+        Visit visit = visitsByDate.remove(date);
+        if (visit != null && visit.getVisitor() == this) {
+            // Note: Visit still references this visitor; would need visit.setVisitor(null) if allowed
+        }
+    }
+    
+    /**
+     * Gets a visit by date (Qualified Association)
+     */
+    public Visit getVisitByDate(LocalDate date) {
+        return visitsByDate.get(date);
+    }
+    
+    /**
+     * Gets all visits (as a map)
+     */
+    public Map<LocalDate, Visit> getVisitsByDate() {
+        return Collections.unmodifiableMap(visitsByDate);
+    }
+    
+    /**
+     * Gets all visits as a collection
+     */
+    public Collection<Visit> getVisits() {
+        return Collections.unmodifiableCollection(visitsByDate.values());
+    }
+    
+    /**
+     * Updates a visit's date in the qualified association
+     * This should be called when a visit's date changes
+     */
+    public void updateVisitDate(LocalDate oldDate, LocalDate newDate, Visit visit) {
+        if (oldDate == null || newDate == null || visit == null) {
+            throw new InvalidReferenceException("Parameters cannot be null.");
+        }
+        
+        if (visitsByDate.get(oldDate) == visit) {
+            visitsByDate.remove(oldDate);
+            if (visitsByDate.containsKey(newDate)) {
+                throw new ValidationException("A visit already exists for date: " + newDate);
+            }
+            visitsByDate.put(newDate, visit);
+        }
     }
 
     public static List<Visitor> getExtent() {

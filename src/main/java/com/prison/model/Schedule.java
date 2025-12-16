@@ -19,14 +19,17 @@ public class Schedule implements Serializable {
     private LocalTime startTime;
     private LocalTime endTime;
     private ActivityType type;
-    private Prisoner prisoner;   // One-to-one or many-to-one: Prisoner following this schedule
-    private Block block;         // Schedule belongs to Block
-    private Staff staff;         // Staff member assigned to schedule
+    private List<Prisoner> prisoners;   // Prisoner[0..*] to Schedule[0..*]
+    private Block block;                // Block[1] to Schedule[1] - mandatory
+    private List<Staff> staffMembers;   // Staff[0..*] to Schedule[0..*]
 
-    public Schedule(LocalTime startTime, LocalTime endTime, ActivityType type) {
+    public Schedule(LocalTime startTime, LocalTime endTime, ActivityType type, Block block) {
         setStartTime(startTime);
         setEndTime(endTime);
         setType(type);
+        setBlock(block);  // Required - Schedule must have a Block
+        this.prisoners = new ArrayList<>();
+        this.staffMembers = new ArrayList<>();
         extent.add(this);
     }
 
@@ -68,18 +71,50 @@ public class Schedule implements Serializable {
         System.out.println("Managing schedule: " + type + " from " + startTime + " to " + endTime);
     }
     
-    public void setPrisoner(Prisoner prisoner) {
-        this.prisoner = prisoner;
-        if (prisoner != null && prisoner.getSchedule() != this) {
-            prisoner.setSchedule(this);
+    /**
+     * Adds a prisoner (many-to-many association)
+     * Prisoner[0..*] to Schedule[0..*]
+     */
+    public void addPrisoner(Prisoner prisoner) {
+        if (prisoner == null) {
+            throw new InvalidReferenceException("Prisoner cannot be null.");
+        }
+        if (!prisoners.contains(prisoner)) {
+            prisoners.add(prisoner);
+            if (!prisoner.getSchedules().contains(this)) {
+                prisoner.addSchedule(this);
+            }
         }
     }
     
-    public Prisoner getPrisoner() {
-        return prisoner;
+    /**
+     * Removes a prisoner
+     */
+    public void removePrisoner(Prisoner prisoner) {
+        if (prisoner != null && prisoners.contains(prisoner)) {
+            prisoners.remove(prisoner);
+            if (prisoner.getSchedules().contains(this)) {
+                prisoner.removeSchedule(this);
+            }
+        }
     }
     
+    /**
+     * Gets all prisoners
+     */
+    public List<Prisoner> getPrisoners() {
+        return Collections.unmodifiableList(prisoners);
+    }
+    
+    /**
+     * Sets block (mandatory 1-to-1 association)
+     * Block[1] to Schedule[1]
+     */
     public void setBlock(Block block) {
+        if (block == null) {
+            throw new InvalidReferenceException("Block cannot be null - schedule must belong to a block.");
+        }
+        
         if (this.block != block) {
             // Remove from old block
             if (this.block != null && this.block.getSchedules().contains(this)) {
@@ -89,7 +124,7 @@ public class Schedule implements Serializable {
             this.block = block;
             
             // Add to new block
-            if (block != null && !block.getSchedules().contains(this)) {
+            if (!block.getSchedules().contains(this)) {
                 block.addSchedule(this);
             }
         }
@@ -99,24 +134,39 @@ public class Schedule implements Serializable {
         return block;
     }
     
-    public void setStaff(Staff staff) {
-        if (this.staff != staff) {
-            // Remove from old staff
-            if (this.staff != null && this.staff.getSchedule() == this) {
-                this.staff.setSchedule(null);
-            }
-            
-            this.staff = staff;
-            
-            // Set in new staff
-            if (staff != null && staff.getSchedule() != this) {
-                staff.setSchedule(this);
+    /**
+     * Adds a staff member (many-to-many association)
+     * Staff[0..*] to Schedule[0..*]
+     */
+    public void addStaff(Staff staff) {
+        if (staff == null) {
+            throw new InvalidReferenceException("Staff cannot be null.");
+        }
+        if (!staffMembers.contains(staff)) {
+            staffMembers.add(staff);
+            if (!staff.getSchedules().contains(this)) {
+                staff.addSchedule(this);
             }
         }
     }
     
-    public Staff getStaff() {
-        return staff;
+    /**
+     * Removes a staff member
+     */
+    public void removeStaff(Staff staff) {
+        if (staff != null && staffMembers.contains(staff)) {
+            staffMembers.remove(staff);
+            if (staff.getSchedules().contains(this)) {
+                staff.removeSchedule(this);
+            }
+        }
+    }
+    
+    /**
+     * Gets all staff members
+     */
+    public List<Staff> getStaffMembers() {
+        return Collections.unmodifiableList(staffMembers);
     }
 
     public static List<Schedule> getExtent() {

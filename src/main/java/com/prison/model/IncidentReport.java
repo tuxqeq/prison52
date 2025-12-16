@@ -22,15 +22,17 @@ public class IncidentReport extends Report {
     private String severity;                  // Severity description
     private Status status;                    // Status of the incident
     private List<String> peopleInvolved;      // [1..*] People involved in incident
-    private Guard reportingGuard;             // Guard who reported
+    private Guard reportingGuard;             // Guard[0..*] to IncidentReport[0..*]
     private Director reviewingDirector;       // Director reviewing
     private Punishment punishment;            // Punishment resulting from incident
+    private IncidentReport relatedIncident;   // Reflex: IncidentReport[0..1] to IncidentReport[0..1]
 
     public IncidentReport(LocalDate date, String description, Status status) {
         super(date, description);  // Call Report constructor
         setStatus(status);
         this.severity = "";  // Initialize to empty string
         this.peopleInvolved = new ArrayList<>();  // Initialize required list
+        this.relatedIncident = null;  // Initialize reflex association
         extent.add(this);
     }
     public Status getStatus() { return status; }
@@ -139,6 +141,53 @@ public class IncidentReport extends Report {
     
     public Punishment getPunishment() {
         return punishment;
+    }
+    
+    /**
+     * Sets related incident (Reflex Association)
+     * IncidentReport[0..1] to IncidentReport[0..1]
+     * Bidirectional - both reports reference each other
+     */
+    public void setRelatedIncident(IncidentReport incident) {
+        if (incident == this) {
+            throw new ValidationException("Incident report cannot be related to itself.");
+        }
+        
+        if (this.relatedIncident != incident) {
+            // Remove old relationship
+            if (this.relatedIncident != null && this.relatedIncident.getRelatedIncident() == this) {
+                IncidentReport oldRelated = this.relatedIncident;
+                this.relatedIncident = null;
+                oldRelated.setRelatedIncident(null);
+            }
+            
+            this.relatedIncident = incident;
+            
+            // Create reverse connection
+            if (incident != null && incident.getRelatedIncident() != this) {
+                incident.setRelatedIncident(this);
+            }
+        }
+    }
+    
+    /**
+     * Gets related incident
+     */
+    public IncidentReport getRelatedIncident() {
+        return relatedIncident;
+    }
+    
+    /**
+     * Removes the related incident relationship
+     */
+    public void removeRelatedIncident() {
+        if (this.relatedIncident != null) {
+            IncidentReport related = this.relatedIncident;
+            this.relatedIncident = null;
+            if (related.getRelatedIncident() == this) {
+                related.relatedIncident = null;  // Direct access to avoid recursion
+            }
+        }
     }
 
     public static List<IncidentReport> getExtent() {

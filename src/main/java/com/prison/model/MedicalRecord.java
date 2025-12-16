@@ -16,14 +16,16 @@ public class MedicalRecord implements Serializable {
     private List<String> history;              // [1..*] Medical history
     private String descriptionOfDiagnosis;
     private Prisoner prisoner;                       // Owner of this record
-    private List<MedicalExamination> examinations;   // Examination history
-    private Doctor assignedDoctor;                   // Primary doctor for this record
+    private List<MedicalExamination> examinations;   // MedicalRecord[1] to MedicalExamination[0..*]
+    private Doctor assignedDoctor;                   // Doctor[0..*] to MedicalRecord[1]
+    private List<MedicalReport> medicalReports;      // COMPOSITION: MedicalReport[0..*] to MedicalRecord[1..1]
 
     public MedicalRecord(LocalDate dateOfCreation, String descriptionOfDiagnosis) {
         setDateOfCreation(dateOfCreation);
         setDescriptionOfDiagnosis(descriptionOfDiagnosis);
         this.history = new ArrayList<>();  // Initialize required list
         this.examinations = new ArrayList<>();
+        this.medicalReports = new ArrayList<>();  // Composition - reports owned by this record
         extent.add(this);
     }
     public LocalDate getDateOfCreation() { return dateOfCreation; }
@@ -109,6 +111,67 @@ public class MedicalRecord implements Serializable {
     
     public Doctor getAssignedDoctor() {
         return assignedDoctor;
+    }
+    
+    /**
+     * Adds a medical report (COMPOSITION)
+     * MedicalReport[0..*] to MedicalRecord[1..1]
+     * Reports cannot exist without a record and cannot be shared
+     */
+    public void addMedicalReport(MedicalReport report) {
+        if (report == null) {
+            throw new InvalidReferenceException("Medical report cannot be null.");
+        }
+        
+        // Composition constraint: report cannot belong to another record
+        if (report.getMedicalRecord() != null && report.getMedicalRecord() != this) {
+            throw new ValidationException("Medical report already belongs to another record - composition violation.");
+        }
+        
+        if (!medicalReports.contains(report)) {
+            medicalReports.add(report);
+            if (report.getMedicalRecord() != this) {
+                report.setMedicalRecord(this);
+            }
+        }
+    }
+    
+    /**
+     * Removes a medical report (COMPOSITION - also deletes the report)
+     */
+    public void removeMedicalReport(MedicalReport report) {
+        if (report != null && medicalReports.contains(report)) {
+            medicalReports.remove(report);
+            // Composition: delete the part when removed from whole
+            report.delete();
+        }
+    }
+    
+    /**
+     * Gets all medical reports
+     */
+    public List<MedicalReport> getMedicalReports() {
+        return Collections.unmodifiableList(medicalReports);
+    }
+    
+    /**
+     * Deletes this medical record (COMPOSITION - cascades to all reports)
+     */
+    public void delete() {
+        // Composition: when whole is deleted, all parts must be deleted
+        List<MedicalReport> reportsCopy = new ArrayList<>(medicalReports);
+        for (MedicalReport report : reportsCopy) {
+            report.delete();  // Delete each report
+        }
+        medicalReports.clear();
+        
+        // Remove from extent
+        extent.remove(this);
+        
+        // Remove other associations
+        if (assignedDoctor != null) {
+            assignedDoctor.removeMedicalRecord(this);
+        }
     }
 
     public static List<MedicalRecord> getExtent() {

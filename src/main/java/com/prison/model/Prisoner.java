@@ -30,11 +30,12 @@ public class Prisoner implements Serializable {
     private static final int maxAmountOfVisitPerMonth = 2;
     
     // --- Associations (Per Authoritative Table) ---
-    private Cell currentCell;                            // Many-to-one: Current cell assignment
-    private List<Punishment> punishments;                // XOR with CourtCase: Punishments received
-    private List<CourtCase> courtCases;                  // XOR with Punishment: Legal cases
-    private List<MealDelivery> mealDeliveries;           // One-to-many: Meal delivery history
-    private Schedule schedule;                           // Many-to-one: Daily schedule
+    private Cell currentCell;                            // Basic: Prisoner[1..*] to Cell[1]
+    private List<Punishment> punishments;                // Prisoner[0..*] to Punishment[0..*]
+    private List<CourtCase> courtCases;                  // CourtCase[1..*] to Prisoner[1]
+    private List<MealDelivery> mealDeliveries;           // Association Class: MealDelivery[0..*] to Prisoner[1]
+    private List<Schedule> schedules;                    // Prisoner[0..*] to Schedule[0..*]
+    private List<Visit> visits;                          // Prisoner[1] to Visit[0..*] {ordered}
 
     // --- Constructor ---
     public Prisoner(String name, String surname, int age, String crime,
@@ -56,6 +57,8 @@ public class Prisoner implements Serializable {
         this.punishments = new ArrayList<>();
         this.courtCases = new ArrayList<>();
         this.mealDeliveries = new ArrayList<>();
+        this.schedules = new ArrayList<>();
+        this.visits = new ArrayList<>();  // {ordered} - maintains insertion order
         
         // Add to extent automatically
         extent.add(this);
@@ -184,14 +187,12 @@ public class Prisoner implements Serializable {
     }
 
     /**
-    /**
      * Removes prisoner from current cell
+     * Note: In basic association, prisoner must always have a cell (1..1 multiplicity)
+     * This method throws exception to prevent violation
      */
     public void removePrisonerFromCell() {
-        if (currentCell != null) {
-            currentCell.removePrisoner(this);
-        }
-        this.currentCell = null;
+        throw new ValidationException("Prisoner must always be assigned to a cell (multiplicity 1..1). Use assignToCell() to transfer.");
     }
 
     /**
@@ -214,35 +215,26 @@ public class Prisoner implements Serializable {
     // --- Association Management Methods ---
     
     /**
-    /**
-     * Assigns prisoner to a cell
-    /**
-     * Handles bidirectional link and removes from old cell if any
+     * Assigns prisoner to a cell (Basic Association - unidirectional from Prisoner to Cell)
+     * Multiplicity: Prisoner[1..*] to Cell[1]
      */
     public void assignToCell(Cell cell) {
-        // Remove from old cell
-        if (this.currentCell != null && this.currentCell != cell) {
-            this.currentCell.removePrisoner(this);
+        if (cell == null) {
+            throw new InvalidReferenceException("Cell cannot be null - prisoner must be assigned to a cell.");
         }
-        
-        // Set new cell
         this.currentCell = cell;
-        
-        // Add to new cell's prisoner list
-        if (cell != null && !cell.getPrisoners().contains(this)) {
-            cell.addPrisoner(this);
-        }
     }
     
-    /**
     /**
      * Sets current cell (wrapper for assignToCell)
      */
     public void setCurrentCell(Cell cell) {
-        assignToCell(cell);
+        if (cell == null) {
+            throw new InvalidReferenceException("Cell cannot be null - prisoner must be assigned to a cell.");
+        }
+        this.currentCell = cell;
     }
     
-    /**
     /**
      * Gets current cell assignment
      */
@@ -346,24 +338,72 @@ public class Prisoner implements Serializable {
     }
     
     /**
-
-    /**
-    /**
-     * Sets the daily schedule
+     * Adds a schedule (many-to-many association)
      */
-    public void setSchedule(Schedule schedule) {
-        this.schedule = schedule;
-        if (schedule != null && schedule.getPrisoner() != this) {
-            schedule.setPrisoner(this);
+    public void addSchedule(Schedule schedule) {
+        if (schedule == null) {
+            throw new InvalidReferenceException("Schedule cannot be null.");
+        }
+        if (!schedules.contains(schedule)) {
+            schedules.add(schedule);
+            if (!schedule.getPrisoners().contains(this)) {
+                schedule.addPrisoner(this);
+            }
         }
     }
     
     /**
-    /**
-     * Gets the daily schedule
+     * Removes a schedule
      */
-    public Schedule getSchedule() {
-        return schedule;
+    public void removeSchedule(Schedule schedule) {
+        if (schedule != null && schedules.contains(schedule)) {
+            schedules.remove(schedule);
+            if (schedule.getPrisoners().contains(this)) {
+                schedule.removePrisoner(this);
+            }
+        }
+    }
+    
+    /**
+     * Gets all schedules
+     */
+    public List<Schedule> getSchedules() {
+        return Collections.unmodifiableList(schedules);
+    }
+    
+    /**
+     * Adds a visit (ordered association)
+     * Multiplicity: Prisoner[1] to Visit[0..*] {ordered}
+     */
+    public void addVisit(Visit visit) {
+        if (visit == null) {
+            throw new InvalidReferenceException("Visit cannot be null.");
+        }
+        if (!visits.contains(visit)) {
+            visits.add(visit);  // Maintains insertion order
+            if (visit.getPrisoner() != this) {
+                visit.setPrisoner(this);
+            }
+        }
+    }
+    
+    /**
+     * Removes a visit
+     */
+    public void removeVisit(Visit visit) {
+        if (visit != null && visits.contains(visit)) {
+            visits.remove(visit);
+            if (visit.getPrisoner() == this) {
+                visit.setPrisoner(null);
+            }
+        }
+    }
+    
+    /**
+     * Gets all visits (ordered)
+     */
+    public List<Visit> getVisits() {
+        return Collections.unmodifiableList(visits);
     }
     
     // Note: Visit association is between Visitor and Visit, NOT Prisoner and Visit

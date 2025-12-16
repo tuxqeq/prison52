@@ -43,7 +43,7 @@ public class SystemTest extends SimpleUnitTest {
             Visitor visitor = new Visitor("Test", "Visitor", "555-0000", "Friend");
             
             assertThrows(InvalidDateException.class, () -> {
-                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, visitor);
+                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, visitor, prisoner);
             });
             
             Prisoner.clearExtent();
@@ -51,14 +51,16 @@ public class SystemTest extends SimpleUnitTest {
         });
 
         runTest("testScheduleEndTimeBeforeStartTime", () -> {
+            Block block = new Block("Test", 10, Block.BlockType.MINIMUM_SECURITY);
             assertThrows(InvalidDateException.class, () -> {
-                new Schedule(LocalTime.of(10, 0), LocalTime.of(9, 0), Schedule.ActivityType.Work);
+                new Schedule(LocalTime.of(10, 0), LocalTime.of(9, 0), Schedule.ActivityType.Work, block);
             });
         });
 
         runTest("testScheduleValid", () -> {
             Schedule.clearExtent();
-            new Schedule(LocalTime.of(9, 0), LocalTime.of(10, 0), Schedule.ActivityType.Work);
+            Block block = new Block("Test", 10, Block.BlockType.MINIMUM_SECURITY);
+            new Schedule(LocalTime.of(9, 0), LocalTime.of(10, 0), Schedule.ActivityType.Work, block);
             assertEquals(1, Schedule.getExtent().size());
         });
 

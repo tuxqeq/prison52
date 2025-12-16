@@ -16,19 +16,17 @@ public class Guard extends Staff {
     private static List<Guard> extent = new ArrayList<>();
     private Rank rank;
     private String weapon;  // Weapon assigned to guard
-    private List<Block> assignedBlocks;        // Blocks this guard supervises
-    private List<IncidentReport> reportedIncidents;  // Incidents reported by this guard
-    private List<Guard> subordinates;          // Guards supervised by this guard
-    private Guard supervisor;                  // This guard's supervisor
-    private List<Meal> supervisedMeals;        // Meals supervised by this guard
-    private List<MedicalReport> medicalReports; // Medical reports (per authoritative table)
+    private List<IncidentReport> reportedIncidents;  // Guard[0..*] to IncidentReport[0..*]
+    private List<Guard> subordinates;          // Guard[0..*] to Guard[0..*] (Reflex)
+    private Guard supervisor;                  // Guard[0..*] to Guard[0..*] (Reflex)
+    private List<Meal> supervisedMeals;        // Guard[0..*] to Meal[0..*]
+    private List<MedicalReport> medicalReports; // Guard[0..*] to MedicalReport[0..*]
 
     public Guard(String name, String surname, int experienceYears, 
                  String shiftHour, String phone, String email, Rank rank, String weapon) {
         super(name, surname, experienceYears, shiftHour, phone, email);
         setRank(rank);
         setWeapon(weapon);
-        this.assignedBlocks = new ArrayList<>();
         this.reportedIncidents = new ArrayList<>();
         this.subordinates = new ArrayList<>();
         this.supervisedMeals = new ArrayList<>();
@@ -47,31 +45,6 @@ public class Guard extends Staff {
     public String getWeapon() { return weapon; }
     public void setWeapon(String weapon) {
         this.weapon = weapon;  // Weapon can be null (unarmed guard)
-    }
-    public void assignToBlock(Block block) {
-        if (block == null) {
-            throw new InvalidReferenceException("Block cannot be null.");
-        }
-        if (!assignedBlocks.contains(block)) {
-            assignedBlocks.add(block);
-            
-            if (!block.getAssignedGuards().contains(this)) {
-                block.assignGuard(this);
-            }
-        }
-    }
-    
-    public void removeFromBlock(Block block) {
-        if (block != null && assignedBlocks.contains(block)) {
-            assignedBlocks.remove(block);
-            if (block.getAssignedGuards().contains(this)) {
-                block.removeGuard(this);
-            }
-        }
-    }
-    
-    public List<Block> getAssignedBlocks() {
-        return Collections.unmodifiableList(assignedBlocks);
     }
     
     public void addReportedIncident(IncidentReport incident) {

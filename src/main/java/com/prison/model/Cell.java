@@ -18,14 +18,13 @@ public class Cell implements Serializable {
     private String type;           // Type of cell
     private int capasity;          // Capacity (diagram spelling)
     private SecurityLevel securityLevel;
-    private Block block;                    // Cell belongs to Block
-    private List<Prisoner> prisoners;       // Prisoners in this cell
+    private Block block;                    // Cell belongs to Block (Aggregation)
+    
     public Cell(int cellNumber, String type, int capasity, SecurityLevel securityLevel) {
         setCellNumber(cellNumber);
         setType(type);
         setCapasity(capasity);
         setSecurityLevel(securityLevel);
-        this.prisoners = new ArrayList<>();
         
         extent.add(this);
     }
@@ -57,9 +56,6 @@ public class Cell implements Serializable {
         }
         this.securityLevel = securityLevel;
     }
-    public int getAvailablePlace() {
-        return capasity - prisoners.size();
-    }
 
     public void setBlock(Block block) {
         
@@ -80,55 +76,7 @@ public class Cell implements Serializable {
     public Block getBlock() {
         return block;
     }
-    
-    public void addPrisoner(Prisoner prisoner) {
-        if (prisoner == null) {
-            throw new InvalidReferenceException("Prisoner cannot be null.");
-        }
-        
-        
-        if (prisoners.size() >= capasity) {
-            throw new ValidationException("Cell is at maximum capacity (" + capasity + ").");
-        }
-        
-        if (!prisoners.contains(prisoner)) {
-            prisoners.add(prisoner);
-            
-            if (prisoner.getCurrentCell() != this) {
-                prisoner.assignToCell(this);
-            }
-        }
-    }
-    
-    public void remove(Prisoner prisoner) {
-        if (prisoner != null && prisoners.contains(prisoner)) {
-            prisoners.remove(prisoner);
-            
-            if (prisoner.getCurrentCell() == this) {
-                prisoner.assignToCell(null);
-            }
-        }
-    }
-    
-    public void removePrisoner(Prisoner prisoner) {
-        if (prisoner != null && prisoners.contains(prisoner)) {
-            prisoners.remove(prisoner);
-            if (prisoner.getCurrentCell() == this) {
-                prisoner.assignToCell(null);
-            }
-        }
-    }
 
-    public List<Prisoner> getPrisoners() {
-        return Collections.unmodifiableList(prisoners);
-    }
-    
-    public int getPrisonerCount() {
-        return prisoners.size();
-    }
-    public boolean isAvailable() {
-        return prisoners.size() < capasity;
-    }
     public static List<Cell> getExtent() {
         return Collections.unmodifiableList(extent);
     }

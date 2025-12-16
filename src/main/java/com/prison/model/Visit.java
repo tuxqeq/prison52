@@ -24,15 +24,17 @@ public class Visit implements Serializable {
     private int duration;          // Duration in minutes
     private VisitType type;
     private ApprovalStatus approvalStatus;
-    private Visitor visitor;       // Visitor (per authoritative table)
-    private Director director;     // Director who approves/rejects visit
+    private Visitor visitor;       // Visit[0..*] to Visitor (Qualified Association)
+    private Director director;     // Director[0..*] to Visit[0..*]
+    private Prisoner prisoner;     // Prisoner[1] to Visit[0..*] {ordered}
 
-    public Visit(LocalDate date, int duration, VisitType type, Visitor visitor) {
+    public Visit(LocalDate date, int duration, VisitType type, Visitor visitor, Prisoner prisoner) {
         setDate(date);
         setDuration(duration);
         setType(type);
         this.approvalStatus = ApprovalStatus.PENDING;
         setVisitor(visitor);
+        setPrisoner(prisoner);
         extent.add(this);
     }
 
@@ -77,13 +79,40 @@ public class Visit implements Serializable {
         }
         this.visitor = visitor;
         
-        if (!visitor.getVisits().contains(this)) {
-            visitor.addVisit(this);
+        // Qualified association - visitor manages visits by date in a dictionary
+        if (!visitor.getVisitsByDate().containsValue(this)) {
+            visitor.addVisitByDate(this.date, this);
         }
     }
     
     public Visitor getVisitor() {
         return visitor;
+    }
+    
+    /**
+     * Sets prisoner (ordered association)
+     * Multiplicity: Prisoner[1] to Visit[0..*] {ordered}
+     */
+    public void setPrisoner(Prisoner prisoner) {
+        if (prisoner == null) {
+            throw new InvalidReferenceException("Prisoner cannot be null - visit must have a prisoner.");
+        }
+        
+        if (this.prisoner != prisoner) {
+            if (this.prisoner != null && this.prisoner.getVisits().contains(this)) {
+                this.prisoner.removeVisit(this);
+            }
+            
+            this.prisoner = prisoner;
+            
+            if (!prisoner.getVisits().contains(this)) {
+                prisoner.addVisit(this);
+            }
+        }
+    }
+    
+    public Prisoner getPrisoner() {
+        return prisoner;
     }
     
     public void setDirector(Director director) {

@@ -18,8 +18,9 @@ public abstract class Staff implements Serializable {
     private String shiftHour;
     private String phone;
     private String email;
-    private Block assignedBlock;    // Staff assigned to Block
-    private Schedule schedule;      // Staff's work schedule
+    private Block assignedBlock;    // Block[0..*] to Staff[0..*]
+    private List<Schedule> schedules;  // Staff[0..*] to Schedule[0..*]
+    
     public Staff(String name, String surname, int experienceYears, 
                  String shiftHour, String phone, String email) {
         setName(name);
@@ -28,6 +29,7 @@ public abstract class Staff implements Serializable {
         setShiftHour(shiftHour);
         setPhone(phone);
         setEmail(email);
+        this.schedules = new ArrayList<>();
         
         // Add to extent
         extent.add(this);
@@ -117,24 +119,39 @@ public abstract class Staff implements Serializable {
         }
     }
     
-    public Schedule getSchedule() {
-        return schedule;
-    }
-    
-    public void setSchedule(Schedule schedule) {
-        if (this.schedule != schedule) {
-            // Remove from old schedule
-            if (this.schedule != null && this.schedule.getStaff() == this) {
-                this.schedule.setStaff(null);
-            }
-            
-            this.schedule = schedule;
-            
-            // Set in new schedule
-            if (schedule != null && schedule.getStaff() != this) {
-                schedule.setStaff(this);
+    /**
+     * Adds a schedule (many-to-many association)
+     * Staff[0..*] to Schedule[0..*]
+     */
+    public void addSchedule(Schedule schedule) {
+        if (schedule == null) {
+            throw new InvalidReferenceException("Schedule cannot be null.");
+        }
+        if (!schedules.contains(schedule)) {
+            schedules.add(schedule);
+            if (!schedule.getStaffMembers().contains(this)) {
+                schedule.addStaff(this);
             }
         }
+    }
+    
+    /**
+     * Removes a schedule
+     */
+    public void removeSchedule(Schedule schedule) {
+        if (schedule != null && schedules.contains(schedule)) {
+            schedules.remove(schedule);
+            if (schedule.getStaffMembers().contains(this)) {
+                schedule.removeStaff(this);
+            }
+        }
+    }
+    
+    /**
+     * Gets all schedules
+     */
+    public List<Schedule> getSchedules() {
+        return Collections.unmodifiableList(schedules);
     }
     
     public static void clearExtent() {
