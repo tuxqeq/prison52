@@ -43,7 +43,7 @@ public class SystemTest extends SimpleUnitTest {
             Visitor visitor = new Visitor("Test", "Visitor", "555-0000", "Friend");
             
             assertThrows(InvalidDateException.class, () -> {
-                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, visitor, prisoner);
+                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, "VID_SYSTEM", visitor, prisoner);
             });
             
             Prisoner.clearExtent();

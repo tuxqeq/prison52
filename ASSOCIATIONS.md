@@ -407,77 +407,106 @@ public Guard getSupervisor() {
 
 ## 5. QUALIFIED ASSOCIATION (Dictionary-Based)
 
-### Visitor → Visit (qualified by Date)
-**Multiplicity:** Visitor → Visit[0..*] {qualified by LocalDate}
+### Visitor → Visit (qualified by visitorID)
+**Multiplicity:** Visitor → Visit[0..*] {qualified by visitorID}
 
 **Description:**
-- Visits organized by date using a Map/dictionary structure
-- Date acts as the qualifier/key for accessing visits
-- Ensures uniqueness - only one visit per visitor per date
-- Fast O(1) lookup by date
-- Prevents duplicate visits on the same date
+- Visits organized by visitorID using a Map/dictionary structure
+- visitorID (String) acts as the qualifier/key for accessing visits
+- Ensures uniqueness - only one visit per visitor per visitorID
+- Fast O(1) lookup by visitorID
+- Prevents duplicate visits with the same visitorID
+- Pattern: Similar to Shop → Dictionary<Email, Customer> where email is Customer's attribute
 
 **Implementation:**
 ```java
 // In Visitor.java
-private Map<LocalDate, Visit> visitsByDate;
+private Map<String, Visit> visitsByVisitorID;
 
-public void addVisitByDate(Visit visit) {
+public void addVisitByVisitorID(String visitorID, Visit visit) {
     if (visit == null) {
         throw new InvalidReferenceException("Visit cannot be null.");
     }
-    LocalDate date = visit.getDate();
-    if (visitsByDate.containsKey(date)) {
-        throw new ValidationException("Visitor already has a visit on " + date);
+    if (visitorID == null || visitorID.trim().isEmpty()) {
+        throw new EmptyStringException("Visitor ID cannot be null or empty.");
     }
-    visitsByDate.put(date, visit);
-    visit.setVisitor(this);
+    if (visitsByVisitorID.containsKey(visitorID)) {
+        throw new ValidationException("A visit already exists for visitorID: " + visitorID);
+    }
+    visitsByVisitorID.put(visitorID, visit);
+    if (visit.getVisitor() != this) {
+        visit.setVisitor(this);
+    }
 }
 
-public Visit getVisitByDate(LocalDate date) {
-    return visitsByDate.get(date);
+public Visit getVisitByVisitorID(String visitorID) {
+    return visitsByVisitorID.get(visitorID);
 }
 
-public void removeVisitByDate(LocalDate date) {
-    Visit visit = visitsByDate.remove(date);
+public void removeVisitByVisitorID(String visitorID) {
+    Visit visit = visitsByVisitorID.remove(visitorID);
     if (visit != null) {
         visit.setVisitor(null);
     }
 }
 
-public void updateVisitDate(LocalDate oldDate, LocalDate newDate) {
-    if (!visitsByDate.containsKey(oldDate)) {
-        throw new InvalidReferenceException("No visit found on " + oldDate);
+public void updateVisitVisitorID(String oldVisitorID, String newVisitorID, Visit visit) {
+    if (oldVisitorID == null || oldVisitorID.trim().isEmpty()) {
+        throw new EmptyStringException("Old visitor ID cannot be null or empty.");
     }
-    if (visitsByDate.containsKey(newDate)) {
-        throw new ValidationException("Visit already exists on " + newDate);
+    if (newVisitorID == null || newVisitorID.trim().isEmpty()) {
+        throw new EmptyStringException("New visitor ID cannot be null or empty.");
     }
-    Visit visit = visitsByDate.remove(oldDate);
-    visitsByDate.put(newDate, visit);
+    if (!visitsByVisitorID.containsKey(oldVisitorID)) {
+        throw new InvalidReferenceException("No visit found with visitorID: " + oldVisitorID);
+    }
+    if (visitsByVisitorID.containsKey(newVisitorID)) {
+        throw new ValidationException("A visit already exists with visitorID: " + newVisitorID);
+    }
+    visitsByVisitorID.remove(oldVisitorID);
+    visitsByVisitorID.put(newVisitorID, visit);
+    visit.setVisitorID(newVisitorID);
 }
 ```
 
 ```java
 // In Visit.java
 private Visitor visitor;
+private String visitorID;  // Qualifier attribute
+
+public Visit(LocalDate date, int duration, VisitType type, String visitorID, 
+             Visitor visitor, Prisoner prisoner) {
+    // Constructor includes visitorID parameter
+    setVisitorID(visitorID);
+    // ... other initialization
+}
 
 public void setVisitor(Visitor visitor) {
     if (this.visitor != null && this.visitor != visitor) {
-        this.visitor.removeVisitByDate(this.getDate());
+        this.visitor.removeVisitByVisitorID(this.visitorID);
     }
     this.visitor = visitor;
-    if (visitor != null) {
-        visitor.addVisitByDate(this);
+    if (visitor != null && !visitor.getVisitsByVisitorID().containsValue(this)) {
+        visitor.addVisitByVisitorID(this.visitorID, this);
     }
+}
+
+public void setVisitorID(String visitorID) {
+    if (visitorID == null || visitorID.trim().isEmpty()) {
+        throw new EmptyStringException("Visitor ID cannot be null or empty.");
+    }
+    this.visitorID = visitorID;
 }
 ```
 
 **Key Features:**
-- Dictionary/Map structure with qualifier as key
-- Automatic uniqueness enforcement by date
+- Dictionary/Map structure with visitorID as qualifier key
+- visitorID is an attribute of Visit (the target class)
+- Automatic uniqueness enforcement by visitorID
 - Fast lookup: O(1) time complexity
-- Prevents duplicate entries
-- Supports key update operations
+- Prevents duplicate entries for same visitorID
+- Supports qualifier update operations
+- Similar pattern to Shop-Customer dictionary example
 
 ---
 
@@ -1189,7 +1218,7 @@ public void addAssignment(Assignment assignment) {
 | 3 | Aggregation | Block ◇→ Cell | [1]◇→[0..*] | Yes | Weak ownership, no cascade | ✅ |
 | 4a | Reflex | IncidentReport ↔ IncidentReport | [0..1]↔[0..1] | Yes | Self-reference, bidirectional | ✅ |
 | 4b | Reflex | Guard ↔ Guard | [0..*]↔[0..*] | Yes | **CHANGED:** Both sides many-to-many | ✅ |
-| 5 | Qualified | Visitor → Visit | →[0..*] {date} | Yes | Dictionary-based, qualified by date | ✅ |
+| 5 | Qualified | Visitor → Visit | →[0..*] {visitorID} | Yes | **CHANGED:** Dictionary-based, qualified by visitorID | ✅ |
 | 6a | Assoc. Class | Meal ↔ Prisoner via MealDelivery | [1]↔[1] | Yes | Junction with deliveryTime, status | ✅ |
 | 6b | Assoc. Class | CourtCase ↔ Prisoner via Charges | [1]↔[1] | Yes | Junction with charge details | ✅ |
 | 7a | Many-to-Many | Punishment ↔ Prisoner | [0..*]↔[0..*] | Yes | **CHANGED:** Now many-to-many | ✅ |
@@ -1210,7 +1239,7 @@ public void addAssignment(Assignment assignment) {
 | 10d | Many-to-Many | Director ↔ Assignment | [0..*]↔[0..*] | Yes | Assignment management | ✅ |
 
 **Total Associations:** 25 (was 13)
-**Changed:** 12 associations modified
+**Changed:** 13 associations modified
 **New:** 3 associations added
 **All Tests Passing:** ✅ 87/87
 **Main.java:** ✅ Compiles and runs successfully
@@ -1364,7 +1393,7 @@ public void delete() {
 11. **Director ↔ Visit**: Changed from one-to-many to many-to-many
 12. **MedicalRecord ↔ MedicalExamination**: Added new bidirectional association
 13. **Director ↔ Assignment**: Changed from one-to-many to many-to-many
-12. **MedicalRecord ↔ MedicalExamination**: Added new bidirectional association
+14. **Visitor → Visit (Qualified)**: Changed qualifier from date to visitorID
 
 ### Backward Compatibility:
 

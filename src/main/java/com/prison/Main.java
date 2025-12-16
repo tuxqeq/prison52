@@ -76,14 +76,14 @@ public class Main {
             LocalDate visitDate1 = LocalDate.now().plusDays(1);
             LocalDate visitDate2 = LocalDate.now().plusDays(3);
             
-            Visit visit1 = new Visit(visitDate1, 60, Visit.VisitType.FAMILY, visitor1, p1);
-            Visit visit2 = new Visit(visitDate2, 45, Visit.VisitType.FAMILY, visitor1, p1);
+            Visit visit1 = new Visit(visitDate1, 60, Visit.VisitType.FAMILY, "VID001", visitor1, p1);
+            Visit visit2 = new Visit(visitDate2, 45, Visit.VisitType.FAMILY, "VID002", visitor1, p1);
             
             System.out.println("✓ Visitor: " + visitor1.getName() + " " + visitor1.getSurname());
-            System.out.println("✓ Visit 1 on " + visitDate1 + ": " + visit1.getDuration() + " minutes");
-            System.out.println("✓ Visit 2 on " + visitDate2 + ": " + visit2.getDuration() + " minutes");
-            System.out.println("✓ Total visits by date: " + visitor1.getVisitsByDate().size());
-            System.out.println("✓ Can retrieve visit by date: " + (visitor1.getVisitByDate(visitDate1) != null));
+            System.out.println("✓ Visit 1 (ID: " + visit1.getVisitorID() + ") on " + visitDate1 + ": " + visit1.getDuration() + " minutes");
+            System.out.println("✓ Visit 2 (ID: " + visit2.getVisitorID() + ") on " + visitDate2 + ": " + visit2.getDuration() + " minutes");
+            System.out.println("✓ Total visits by visitorID: " + visitor1.getVisitsByVisitorID().size());
+            System.out.println("✓ Can retrieve visit by visitorID: " + (visitor1.getVisitByVisitorID("VID001") != null));
 
             // 6. Test Composition: MedicalRecord-MedicalReport with Cascade Delete
             System.out.println("\n6. TESTING COMPOSITION: MedicalRecord→MedicalReport");

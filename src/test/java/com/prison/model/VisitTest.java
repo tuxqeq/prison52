@@ -12,7 +12,7 @@ public class VisitTest extends SimpleUnitTest {
             Visitor visitor = new Visitor("Test", "Visitor", "555-0000", "Friend");
             
             assertThrows(InvalidDateException.class, () -> {
-                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, visitor, prisoner);
+                new Visit(LocalDate.now().minusDays(1), 60, Visit.VisitType.FAMILY, "VID_TEST1", visitor, prisoner);
             });
             
             Prisoner.clearExtent();
@@ -23,7 +23,7 @@ public class VisitTest extends SimpleUnitTest {
             Prisoner prisoner = new Prisoner("Test", "Prisoner", 30, "Test", 
                 LocalDate.of(2020, 1, 1), 5, "None", "Active");
             Visitor visitor = new Visitor("Test", "Visitor", "555-0000", "Friend");
-            Visit v = new Visit(LocalDate.now().plusDays(1), 30, Visit.VisitType.LAWYER, visitor, prisoner);
+            Visit v = new Visit(LocalDate.now().plusDays(1), 30, Visit.VisitType.LAWYER, "VID_TEST2", visitor, prisoner);
             
             assertEquals(30, v.getDuration());
             

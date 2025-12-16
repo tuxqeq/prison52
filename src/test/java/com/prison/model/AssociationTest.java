@@ -317,10 +317,10 @@ public class AssociationTest extends SimpleUnitTest {
                 LocalDate.now().minusYears(1), 5, "None", "Active");
             
             LocalDate visitDate = LocalDate.now().plusDays(1);
-            Visit visit = new Visit(visitDate, 60, Visit.VisitType.FAMILY, visitor, prisoner);
+            Visit visit = new Visit(visitDate, 60, Visit.VisitType.FAMILY, "VID001", visitor, prisoner);
             
-            // Access by qualifier (date)
-            assertEquals(visit, visitor.getVisitByDate(visitDate));
+            // Access by qualifier (visitorID)
+            assertEquals(visit, visitor.getVisitByVisitorID("VID001"));
             
             Visitor.clearExtent();
             Visit.clearExtent();
@@ -333,12 +333,12 @@ public class AssociationTest extends SimpleUnitTest {
                 LocalDate.now().minusYears(1), 5, "None", "Active");
             
             LocalDate visitDate = LocalDate.now().plusDays(2);
-            new Visit(visitDate, 60, Visit.VisitType.FAMILY, visitor, prisoner);
+            new Visit(visitDate, 60, Visit.VisitType.FAMILY, "VID002", visitor, prisoner);
             
-            // Cannot add another visit for the same date
+            // Cannot add another visit for the same visitorID
             assertThrows(ValidationException.class, () -> {
-                visitor.addVisitByDate(visitDate, 
-                    new Visit(visitDate, 30, Visit.VisitType.FAMILY, visitor, prisoner));
+                visitor.addVisitByVisitorID("VID002", 
+                    new Visit(visitDate, 30, Visit.VisitType.FAMILY, "VID002", visitor, prisoner));
             });
             
             Visitor.clearExtent();
@@ -352,13 +352,13 @@ public class AssociationTest extends SimpleUnitTest {
                 LocalDate.now().minusYears(1), 5, "None", "Active");
             
             LocalDate visitDate = LocalDate.now().plusDays(3);
-            Visit visit = new Visit(visitDate, 60, Visit.VisitType.FAMILY, visitor, prisoner);
+            Visit visit = new Visit(visitDate, 60, Visit.VisitType.FAMILY, "VID003", visitor, prisoner);
             
-            assertEquals(visit, visitor.getVisitByDate(visitDate));
+            assertEquals(visit, visitor.getVisitByVisitorID("VID003"));
             
             // Remove by qualifier
-            visitor.removeVisitByDate(visitDate);
-            assertEquals(null, visitor.getVisitByDate(visitDate));
+            visitor.removeVisitByVisitorID("VID003");
+            assertEquals(null, visitor.getVisitByVisitorID("VID003"));
             
             Visitor.clearExtent();
             Visit.clearExtent();
@@ -372,12 +372,12 @@ public class AssociationTest extends SimpleUnitTest {
             
             LocalDate oldDate = LocalDate.now().plusDays(4);
             LocalDate newDate = LocalDate.now().plusDays(5);
-            Visit visit = new Visit(oldDate, 60, Visit.VisitType.FAMILY, visitor, prisoner);
+            Visit visit = new Visit(oldDate, 60, Visit.VisitType.FAMILY, "VID004OLD", visitor, prisoner);
             
             // Update qualifier
-            visitor.updateVisitDate(oldDate, newDate, visit);
-            assertEquals(null, visitor.getVisitByDate(oldDate));
-            assertEquals(visit, visitor.getVisitByDate(newDate));
+            visitor.updateVisitVisitorID("VID004OLD", "VID004NEW", visit);
+            assertEquals(null, visitor.getVisitByVisitorID("VID004OLD"));
+            assertEquals(visit, visitor.getVisitByVisitorID("VID004NEW"));
             
             Visitor.clearExtent();
             Visit.clearExtent();

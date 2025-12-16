@@ -20,18 +20,20 @@ public class Visit implements Serializable {
 
     private static List<Visit> extent = new ArrayList<>();
 
+    private String visitorID;      // Qualifier for qualified association
     private LocalDate date;
     private int duration;          // Duration in minutes
     private VisitType type;
     private ApprovalStatus approvalStatus;
-    private Visitor visitor;       // Visit[0..*] to Visitor (Qualified Association)
+    private Visitor visitor;       // Visit[0..*] to Visitor (Qualified Association by visitorID)
     private List<Director> directors;     // Director[0..*] to Visit[0..*] - many-to-many
     private Prisoner prisoner;     // Prisoner[1] to Visit[0..*] {ordered}
 
-    public Visit(LocalDate date, int duration, VisitType type, Visitor visitor, Prisoner prisoner) {
+    public Visit(LocalDate date, int duration, VisitType type, String visitorID, Visitor visitor, Prisoner prisoner) {
         setDate(date);
         setDuration(duration);
         setType(type);
+        setVisitorID(visitorID);
         this.approvalStatus = ApprovalStatus.PENDING;
         this.directors = new ArrayList<>();
         setVisitor(visitor);
@@ -74,15 +76,23 @@ public class Visit implements Serializable {
         this.approvalStatus = approvalStatus;
     }
     
+    public String getVisitorID() { return visitorID; }
+    public void setVisitorID(String visitorID) {
+        if (visitorID == null || visitorID.trim().isEmpty()) {
+            throw new EmptyStringException("Visitor ID cannot be empty.");
+        }
+        this.visitorID = visitorID;
+    }
+    
     public void setVisitor(Visitor visitor) {
         if (visitor == null) {
             throw new InvalidReferenceException("Visitor cannot be null.");
         }
         this.visitor = visitor;
         
-        // Qualified association - visitor manages visits by date in a dictionary
-        if (!visitor.getVisitsByDate().containsValue(this)) {
-            visitor.addVisitByDate(this.date, this);
+        // Qualified association - visitor manages visits by visitorID in a dictionary
+        if (!visitor.getVisitsByVisitorID().containsValue(this)) {
+            visitor.addVisitByVisitorID(this.visitorID, this);
         }
     }
     

@@ -16,14 +16,14 @@ public class Visitor implements Serializable {
     private String surname;
     private String contactInfo;
     private String relationshipToPrisoner;
-    private Map<LocalDate, Visit> visitsByDate;    // Qualified Association: Visit[0..*] to Visitor (qualified by date)
+    private Map<String, Visit> visitsByVisitorID;    // Qualified Association: Visit[0..*] to Visitor (qualified by visitorID)
 
     public Visitor(String name, String surname, String contactInfo, String relationshipToPrisoner) {
         setName(name);
         setSurname(surname);
         setContactInfo(contactInfo);
         setRelationshipToPrisoner(relationshipToPrisoner);
-        this.visitsByDate = new HashMap<>();
+        this.visitsByVisitorID = new HashMap<>();
         extent.add(this);
     }
 
@@ -64,78 +64,78 @@ public class Visitor implements Serializable {
     }
     
     /**
-     * Adds a visit by date (Qualified Association)
-     * The qualifier is the visit date
+     * Adds a visit by visitorID (Qualified Association)
+     * The qualifier is the visitorID
      */
-    public void addVisitByDate(LocalDate date, Visit visit) {
-        if (date == null) {
-            throw new InvalidReferenceException("Visit date cannot be null.");
+    public void addVisitByVisitorID(String visitorID, Visit visit) {
+        if (visitorID == null || visitorID.trim().isEmpty()) {
+            throw new EmptyStringException("Visitor ID cannot be empty.");
         }
         if (visit == null) {
             throw new InvalidReferenceException("Visit cannot be null.");
         }
         
-        // Check if a visit already exists for this date
-        if (visitsByDate.containsKey(date)) {
-            throw new ValidationException("A visit already exists for date: " + date);
+        // Check if a visit already exists for this visitorID
+        if (visitsByVisitorID.containsKey(visitorID)) {
+            throw new ValidationException("A visit already exists for visitorID: " + visitorID);
         }
         
-        visitsByDate.put(date, visit);
+        visitsByVisitorID.put(visitorID, visit);
         if (visit.getVisitor() != this) {
             visit.setVisitor(this);
         }
     }
     
     /**
-     * Removes a visit by date
+     * Removes a visit by visitorID
      */
-    public void removeVisitByDate(LocalDate date) {
-        if (date == null) {
-            throw new InvalidReferenceException("Visit date cannot be null.");
+    public void removeVisitByVisitorID(String visitorID) {
+        if (visitorID == null || visitorID.trim().isEmpty()) {
+            throw new EmptyStringException("Visitor ID cannot be empty.");
         }
         
-        Visit visit = visitsByDate.remove(date);
+        Visit visit = visitsByVisitorID.remove(visitorID);
         if (visit != null && visit.getVisitor() == this) {
-            // Note: Visit still references this visitor; would need visit.setVisitor(null) if allowed
+            // Note: Visit still references this visitor
         }
     }
     
     /**
-     * Gets a visit by date (Qualified Association)
+     * Gets a visit by visitorID (Qualified Association)
      */
-    public Visit getVisitByDate(LocalDate date) {
-        return visitsByDate.get(date);
+    public Visit getVisitByVisitorID(String visitorID) {
+        return visitsByVisitorID.get(visitorID);
     }
     
     /**
-     * Gets all visits (as a map)
+     * Gets all visits (as a map qualified by visitorID)
      */
-    public Map<LocalDate, Visit> getVisitsByDate() {
-        return Collections.unmodifiableMap(visitsByDate);
+    public Map<String, Visit> getVisitsByVisitorID() {
+        return Collections.unmodifiableMap(visitsByVisitorID);
     }
     
     /**
      * Gets all visits as a collection
      */
     public Collection<Visit> getVisits() {
-        return Collections.unmodifiableCollection(visitsByDate.values());
+        return Collections.unmodifiableCollection(visitsByVisitorID.values());
     }
     
     /**
-     * Updates a visit's date in the qualified association
-     * This should be called when a visit's date changes
+     * Updates a visit's visitorID in the qualified association
+     * This should be called when a visit's visitorID changes
      */
-    public void updateVisitDate(LocalDate oldDate, LocalDate newDate, Visit visit) {
-        if (oldDate == null || newDate == null || visit == null) {
+    public void updateVisitVisitorID(String oldVisitorID, String newVisitorID, Visit visit) {
+        if (oldVisitorID == null || newVisitorID == null || visit == null) {
             throw new InvalidReferenceException("Parameters cannot be null.");
         }
         
-        if (visitsByDate.get(oldDate) == visit) {
-            visitsByDate.remove(oldDate);
-            if (visitsByDate.containsKey(newDate)) {
-                throw new ValidationException("A visit already exists for date: " + newDate);
+        if (visitsByVisitorID.get(oldVisitorID) == visit) {
+            visitsByVisitorID.remove(oldVisitorID);
+            if (visitsByVisitorID.containsKey(newVisitorID)) {
+                throw new ValidationException("A visit already exists for visitorID: " + newVisitorID);
             }
-            visitsByDate.put(newDate, visit);
+            visitsByVisitorID.put(newVisitorID, visit);
         }
     }
 
